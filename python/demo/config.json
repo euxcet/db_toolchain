@@ -1,0 +1,45 @@
+{
+  "check_alive_after_sec": 15,
+  "object": [
+    {
+      "type": "GloveDetector",
+      "num_classes": 11,
+      "ip": "127.0.0.1",
+      "port": 11002,
+      "model_file": "glove.pth",
+      "label": ["g_sniper", "g_hostage", "g_gather", "g_quick", "g_stop", "g_search", "g_ok", "g_safe", "g_danger", "g_prepare"],
+      "detection_interval": 10,
+      "group": [["g_sniper", "g_hostage", "g_gather", "g_quick", "g_stop", "g_search", "g_ok", "g_safe", "g_danger", "g_prepare"]]
+    },
+    {
+      "type": "RingDetector",
+      "num_classes": 28,
+      "mac": "0D85597D-C82C-E839-E0E0-4776246A6398",
+      "model_file": "ring.pth",
+      "label": ["r_left", "r_forward", "r_up", "r_bomb", "r_close", "r_forward", "r_gather", "r_quick", "r_enemy", "r_cover", "r_repeat"],
+      "detection_interval": 10,
+      "group": [["r_left", "r_forward", "r_up"], ["r_bomb", "r_close", "r_forward", "r_gather", "r_quick", "r_enemy", "r_cover", "r_repeat"]]
+    },
+    {
+      "type": "GestureAggregator",
+      "gesture": [
+        { "name": "bomb", "event": ["r_bomb"] },
+        { "name": "close", "event": ["r_close"] },
+        { "name": "cover", "event": ["r_cover"] },
+        { "name": "enemy", "event": ["r_enemy"] },
+        { "name": "gather", "event": ["r_gather"] },
+        { "name": "quick", "event": ["r_quick", "g_quick"] },
+        { "name": "forward", "event": ["r_forward"] },
+        { "name": "repeat", "event": ["r_repeat"] },
+        { "name": "hostage", "event": ["r_move", "g_hostage"] },
+        { "name": "prepare", "event": ["r_move", "g_prepare"] },
+        { "name": "ok", "event": ["r_move", "g_ok"] },
+        { "name": "safe", "event": ["r_move", "g_safe"] },
+        { "name": "danger", "event": ["r_move", "g_danger"] },
+        { "name": "search", "event": ["r_move", "g_search"] },
+        { "name": "sniper", "event": ["r_move", "g_sniper"] },
+        { "name": "move", "event": ["r_move", "g_stop"] }
+      ]
+    }
+  ]
+}
