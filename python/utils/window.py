@@ -64,7 +64,10 @@ class Window(Generic[_T]):
     return index, value
 
   def to_numpy(self):
-    return np.concatenate(self.window, axis=0)
+    return np.array(self.window)
+
+  def to_numpy_float(self):
+    return np.array(self.window).astype('float32')
   
   def feature(self) -> list[float]:
     x = np.array(self.window)

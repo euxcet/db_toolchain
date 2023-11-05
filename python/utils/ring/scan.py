@@ -1,6 +1,6 @@
 import time
 import asyncio
-from core.ble_ring import BLERing, scan_rings
+from core.ble_ring import RingBLE, scan_rings
 
 async def connect_ring():
   scan_macs = await scan_rings()

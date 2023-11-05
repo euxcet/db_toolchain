@@ -8,9 +8,9 @@ from python.model.gesture_cnn import GestureNetCNN
 import torch
 import scipy
 from queue import Queue
-from core.ble_ring import BLERing, scan_rings
+from python.core.ring_ble import RingBLE, scan_rings
 import torch.nn.functional as F
-from core.window import Window
+from python.utils.window import Window
 from threading import Thread
 import asyncio
 
@@ -19,13 +19,13 @@ class Ring(Thread):
     Thread.__init__(self)
     self.macs = macs
     self.data_queue = data_queue
-    self.rings:list[BLERing] = []
+    self.rings:list[RingBLE] = []
     self.initialize_rings()
     self.connected = False
 
   def initialize_rings(self):
     for index, mac in enumerate(self.macs):
-      self.rings.append(BLERing(mac, index=index, imu_callback=self.imu_callback))
+      self.rings.append(RingBLE(mac, index=index, imu_callback=self.imu_callback))
 
   async def connect_rings(self):
     coroutines = [ring.connect() for ring in self.rings]

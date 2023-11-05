@@ -1,6 +1,6 @@
 import time
 import asyncio
-from core.ble_ring import BLERing, scan_rings
+from core.ble_ring import RingBLE, scan_rings
 
 last_check_time = 0
 first_battery = -1
@@ -21,7 +21,7 @@ def battery_callback(battery):
 async def connect_ring():
   global ring
   scan_macs = await scan_rings()
-  ring = BLERing(scan_macs[0], index=0, battery_callback=battery_callback)
+  ring = RingBLE(scan_macs[0], index=0, battery_callback=battery_callback)
   coroutines = [ring.connect()]
   await asyncio.gather(*coroutines)
 

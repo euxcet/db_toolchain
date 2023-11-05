@@ -1,23 +1,21 @@
 import time
+from utils.logger import logger
 
 class Counter():
-  def __init__(self, print_gap:int=1000):
-    self.t0 = 0
+  def __init__(self, execute_interval=10, print_interval:int=1000):
+    self.st = 0
     self.counter = 0
-    self.print_gap = print_gap
+    self.execute_interval = execute_interval
+    self.print_interval = print_interval
 
-  def count(self, print_dict:dict=dict(), disable_print=False):
+  def count(self, print_dict:dict=dict(), enable_print=False, print_fps=True) -> bool:
     current_time = time.time()
-    if self.t0 == 0:
-      self.t0 = current_time
-    else:
-      self.counter += 1
-      if self.counter == self.print_gap:
-        fps = self.counter / (current_time - self.t0)
-        print_dict['FPS'] = fps
-        if not disable_print:
-          for key, value in print_dict.items():
-            print('{}: {}'.format(key, value), end='  ')
-          print()
-        self.counter = 0
-        self.t0 = 0
+    self.st = current_time if self.st == 0 else self.st
+    self.counter += 1
+    if self.counter % self.print_interval == 0:
+      if enable_print:
+        if print_fps:
+          print_dict['FPS'] = self.print_interval / (current_time - self.st)
+        logger.info('  '.join(f'{k}: {v}' for k, v in print_dict.items()))
+      self.st = current_time
+    return self.counter % self.execute_interval == 0

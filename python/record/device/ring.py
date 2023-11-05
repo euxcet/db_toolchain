@@ -2,7 +2,7 @@ import time
 import struct
 import asyncio
 import os.path as osp
-from core.ble_ring import BLERing
+from core.ble_ring import RingBLE
 from core.imu_data import IMUData
 from utils.counter import Counter
 from utils.file_utils import make_dir
@@ -18,7 +18,7 @@ class Ring(Thread):
     self.save_dir = None
     self.counter = Counter()
 
-    self.ring = BLERing(mac, index=0, imu_callback=self.imu_callback)
+    self.ring = RingBLE(mac, index=0, imu_callback=self.imu_callback)
     self.ring_thread = Thread(target=self.connect)
     self.ring_thread.daemon = True
     self.ring_thread.start()

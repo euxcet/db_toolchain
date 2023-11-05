@@ -7,6 +7,8 @@ from bleak import BleakScanner, BleakClient
 from .imu_data import IMUData
 import queue
 from enum import Enum
+from utils.file_utils import load_json
+from utils.logger import logger
 
 class RingLifeCircleEvent(Enum):
   on_connect = 0
@@ -19,13 +21,27 @@ class RingEventType(Enum):
   battery = 3
 
 class RingEvent():
-  def __init__(self, ring:BLERing, timestamp:float, event_type:RingEventType, event):
-    self.ring = ring
-    self.timestamp = timestamp
+  def __init__(self, event_type:RingEventType, data, timestamp:float, address:str):
     self.event_type = event_type
-    self.event = event
+    self.data = data
+    self.address = address
+    self.timestamp = timestamp
 
-class BLERing:
+class RingConfig():
+  def __init__(self, address:str, name:str="Ring Unnamed", adapter:str=None, imu_freq=200,
+               enable_imu=True, enable_touch=True, quiet_log=False):
+    self.address = address
+    self.name = name
+    self.adapter = adapter
+    self.imu_freq = imu_freq
+    self.enable_imu = enable_imu
+    self.enable_touch = enable_touch
+    self.quiet_log = quiet_log
+
+  def load_from_file(file_path):
+    return RingConfig(**load_json(file_path))
+
+class RingBLE:
   EDPT_QUERY_SS			          = 0
   EDPT_OP_SYS_CONF            = 3
   EDPT_OP_ACTION_CLASS        = 4
@@ -46,14 +62,9 @@ class BLERing:
   SPP_READ_CHARACTERISTIC = 'A6ED0202-D344-460A-8075-B9E8EC90D71B'
   SPP_WRITE_CHARACTERISTIC = 'A6ED0203-D344-460A-8075-B9E8EC90D71B'
 
-  def __init__(self, address:str, name:str, event_callback=None, adapter=None, imu_freq=200, enable_imu=True, enable_touch=True):
-    self.address = address
-    self.name = name
+  def __init__(self, config:RingConfig, event_callback=None):
+    self.config = config
     self.event_callback = event_callback
-    self.adapter = adapter
-    self.imu_freq = imu_freq
-    self.enable_imu = enable_imu
-    self.enable_touch = enable_touch
 
     self.client = None
     self.action_queue = queue.Queue()
@@ -63,54 +74,47 @@ class BLERing:
     self.imu_mode = False
 
     self.raw_imu_data = bytearray()
-    self.acc_fsr = '0'
-    self.gyro_fsr = '0'
-    self.color = ''
-
+    self.color = None
 
   def on_connected(self):
     if self.event_callback is not None:
-      self.event_callback(RingEvent(self, time.time(), RingEventType.lifecircle, RingLifeCircleEvent.on_connect))
+      self.event_callback(RingEvent(RingEventType.lifecircle, RingLifeCircleEvent.on_connect, time.time(), self.config.address))
 
   def on_disconnect(self, clients):
     self.disconnected = True
     if self.event_callback is not None:
-      self.event_callback(RingEvent(self, time.time(), RingEventType.lifecircle, RingLifeCircleEvent.on_disconnect))
+      self.event_callback(RingEvent(RingEventType.lifecircle, RingLifeCircleEvent.on_disconnect, time.time(), self.config.address))
+
+  def log_info(self, message):
+    if not self.config.quiet_log:
+      logger.info(message)
 
   def ble_notify_callback(self, sender, data):
     crc = self.crc16(data)
     crc_l = crc & 0xFF
     crc_h = (crc >> 8) & 0xFF
     if crc_l != data[1] or crc_h != data[2]:
-      print(f"Error: crc is wrong! Data: {data}")
+      logger.error('crc is wrong!')
       return
 
     if data[0] == self.EDPT_QUERY_SS:
       if self.event_callback is not None:
-        self.event_callback(RingEvent(self, time.time(), RingEventType.battery, data[15] & 0xFF))
+        self.event_callback(RingEvent(RingEventType.battery, data[15] & 0xFF, time.time(), self.config.address))
     elif data[0] == self.EDPT_OP_GSENSOR_STATE:
       union_val = ((data[6] & 0xFF) << 24) | ((data[5] & 0xFF) << 16) | ((data[4] & 0xFF) << 8) | (data[3] & 0xFF)
       chip_state = union_val & 0x1
       work_state = (union_val >> 1) & 0x1
       step_count = (union_val >> 8) & 0x00FFFFFF
-      print('gsensor_state', chip_state, work_state, step_count)
-    elif data[0] == self.EDPT_OP_GSENSOR_DATA:
-      data_type = data[3]
-      print(data_type)
+      self.log_info('gsensor state {} {} {}'.format(chip_state, work_state, step_count))
     elif data[0] == self.EDPT_OP_TOUCH_ACTION:
       op_type = data[3] & 0x3
       report_path = (data[3] >> 2) & 0x3
       action_code = data[4]
       if op_type < 2:
-        if report_path == 0:
-          print('HID')
-        elif report_path == 1:
-          print('BLE')
-        else:
-          print('HID & BLE')
+        self.log_info('touch action method: ' + ['HID', 'BLE', 'HID & BLE'][report_path])
       elif op_type == 2:
         if self.event_callback is not None:
-          self.event_callback(RingEvent(self, time.time(), RingEventType.touch, action_code))
+          self.event_callback(RingEvent(RingEventType.touch, action_code, time.time(), self.config.address))
 
   def spp_notify_callback(self, sender, data:bytearray):
     if self.imu_mode:
@@ -131,7 +135,7 @@ class BLERing:
           struct.unpack("Q", imu_frame[28:36])[0]
         )
         if self.event_callback is not None:
-          self.event_callback(RingEvent(self, time.time(), RingEventType.imu, imu_data))
+          self.event_callback(RingEvent(RingEventType.imu, imu_data, time.time(), self.config.address))
         crc = self.crc16(imu_frame, offset=4)
         if (crc & 0xFF) != imu_frame[2] or ((crc >> 8) & 0xFF) != imu_frame[3]:
           if not self.disconnected:
@@ -146,7 +150,7 @@ class BLERing:
         if result.startswith('ACK'):
           if result == 'ACK:ENDB6AX':
             self.imu_mode = True
-          print(result)
+          self.log_info(result)
         elif result.startswith('ACC'):
           args = list(map(lambda x: x.split(':')[1], result.split(',')))
           acc_dict = {'0': '16g', '1': '8g', '2': '4g', '3': '2g'}
@@ -154,10 +158,9 @@ class BLERing:
           self.acc_fsr = args[0]
           self.gyro_fsr = args[1]
           self.imu_freq = float(args[3])
-          print('IMU ACC FSR: ' + acc_dict[args[0]] + '   IMU GYRO FSY: ' + gyro_dict[args[1]] + '   IMU FREQ: ' + args[3] + 'Hz')
+          self.log_info('IMU ACC FSR: {}  IMU GYRO FSY: {}  IMU FREQ: {}Hz'.format(acc_dict[args[0]], gyro_dict[args[1]], args[3]))
         else:
-          # pass
-          print(result)
+          self.log_info(result)
 
   def crc16(self, data, offset=3):
     genpoly = 0xA001
@@ -238,15 +241,15 @@ class BLERing:
 
   async def connect(self):
     if self.adapter is None:
-      self.client = BleakClient(self.address)
+      self.client = BleakClient(self.config.address)
     else:
-      self.client = BleakClient(self.address, adapter=self.adapter)
+      self.client = BleakClient(self.config.address, adapter=self.config.adapter)
     await self.client.connect()
 
     self.on_connected()
     self.client.set_disconnected_callback(self.on_disconnect)
 
-    print("Start notify")
+    self.log_info("Start notify")
     await self.client.start_notify(self.SPP_READ_CHARACTERISTIC, self.spp_notify_callback)
     await self.client.start_notify(self.NOTIFY_CHARACTERISTIC, self.ble_notify_callback)
 
@@ -256,9 +259,9 @@ class BLERing:
     await self.send('ENSPP')
     await self.send('ENFAST')
     # touch
-    await self.send('TPOPS=' + '1,1,1' if self.enable_touch else '0,0,0')
+    await self.send('TPOPS=' + '1,1,1' if self.config.enable_touch else '0,0,0')
     # imu
-    if self.enable_imu != None:
+    if self.config.enable_imu != None:
       await self.send('IMUARG=0,0,0,' + str(self.imu_freq))
       await self.send('ENDB6AX')
     self.set_color('B')

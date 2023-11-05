@@ -10,11 +10,11 @@ import numpy as np
 import torch.nn.functional as F
 from core.imu_data import IMUData
 from python.model.gesture_cnn import GestureNetCNN
-from core.window import Window
+from python.utils.window import Window
 from threading import Thread
 from python.model.fully_connected import FullyConnectedModel
 from queue import Queue
-from core.ble_ring import BLERing, scan_rings
+from python.core.ring_ble import RingBLE, scan_rings
 import playsound
 import asyncio
 

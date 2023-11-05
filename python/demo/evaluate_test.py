@@ -9,11 +9,11 @@ import numpy as np
 import torch.nn.functional as F
 from core.imu_data import IMUData
 from python.model.gesture_cnn import GestureNetCNN
-from core.window import Window
+from python.utils.window import Window
 from threading import Thread
 from python.model.fully_connected import FullyConnectedModel
 from queue import Queue
-from core.ble_ring import BLERing, scan_rings
+from core.ble_ring import RingBLE, scan_rings
 import playsound
 import asyncio
 from utils.counter import Counter
@@ -24,7 +24,7 @@ class Ring(Thread):
     Thread.__init__(self)
     self.macs = macs
     self.data_queue = data_queue
-    self.rings:list[BLERing] = []
+    self.rings:list[RingBLE] = []
     self.adapter = adapter
     self.initialize_rings()
     self.connected = False
@@ -35,7 +35,7 @@ class Ring(Thread):
 
   def initialize_rings(self):
     for index, mac in enumerate(self.macs):
-      self.rings.append(BLERing(mac, index=index, imu_callback=self.imu_callback, adapter=self.adapter, event_callback=self.event_callback))
+      self.rings.append(RingBLE(mac, index=index, imu_callback=self.imu_callback, adapter=self.adapter, event_callback=self.event_callback))
 
   async def connect_rings(self):
     coroutines = [ring.connect() for ring in self.rings]

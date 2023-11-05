@@ -69,8 +69,8 @@ class IMUDataGroup():
   def __str__(self):
     return '\n'.join(map(str, self.data)) + '\n'
 
-  def scale(self) -> IMUDataGroup:
-    return IMUDataGroup([x.scale() for x in self.data])
+  # def scale(self) -> IMUDataGroup:
+  #   return IMUDataGroup([x.scale() for x in self.data])
 
   def to_numpy(self):
     return np.array([x[j] for x in self.data for j in range(6)])
