@@ -2,7 +2,7 @@ import time
 from utils.logger import logger
 
 class Counter():
-  def __init__(self, execute_interval=10, print_interval:int=1000):
+  def __init__(self, execute_interval=10, print_interval:int=100):
     self.st = 0
     self.counter = 0
     self.execute_interval = execute_interval

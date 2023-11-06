@@ -3,48 +3,60 @@ import torch
 import torch.nn as nn
 from abc import abstractmethod
 from utils.counter import Counter
+from sensor import Ring, RingEvent, RingEventType, ring_pool
+from sensor.glove import Glove
+
+class DetectorEvent():
+  def __init__(self, detector:str, data):
+    self.detector = detector
+    self.data = data
 
 class DetectorEventBroadcaster():
   def __init__(self):
     self.detectors:list[Detector] = []
 
-  def add_detector(self, detector:Detector):
+  def add_detector(self, detector:str):
     self.detectors.append(detector)
 
-  def remove_detector(self, detector:Detector):
+  def remove_detector(self, detector:str):
     self.detectors.append(detector)
 
-  def broadcast_event(self, detector:Detector, event):
+  def broadcast_event(self, event):
     for d in self.detectors:
-      d.handle_detector_event(detector, event)
+      d.handle_detector_event(event)
 
 broadcaster = DetectorEventBroadcaster()
 
 class Detector():
-  def __init__(self, model:nn.Module=None, checkpoint_path=None, handler=None):
+  def __init__(self, model:nn.Module=None, device:Ring|Glove=None, handler=None, arguments:dict=dict()):
+    # model
     if model is not None:
       self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-      self.checkpoint_path = checkpoint_path
       self.model:nn.Module = model
-      self.model.load_state_dict(torch.load(self.checkpoint_path, map_location=self.device))
+      self.model.load_state_dict(torch.load(arguments['checkpoint_file'], map_location=self.device))
       self.model.eval()
+    # device
+    if device is not None:
+      if type(device) is Ring:
+        ring_pool.bind_ring(self.handle_ring_event, ring=device)
+      elif type(device) is Glove:
+        pass
     self.counter = Counter()
     self.handler = handler
+    self.arguments = arguments
     broadcaster.add_detector(self)
 
-  def broadcast_event(self, event):
+  def broadcast_event(self, data):
+    event = DetectorEvent(self.name, data)
     if self.handler is not None:
-      self.handler(self, event)
-    broadcaster.broadcast_event(self, event)
+      self.handler(event)
+    broadcaster.broadcast_event(event)
+
+  @property
+  @abstractmethod
+  def name(self):
+    return self.arguments['name']
 
   @abstractmethod
-  def run():
+  def handle_detector_event(self, event:DetectorEvent):
     pass
-
-  @abstractmethod
-  def handle_detector_event(self, detector, event):
-    pass
-
-  # @abstractmethod
-  # def event_description(self) -> str:
-  #   pass

@@ -1,9 +1,10 @@
 import queue
 import asyncio
 from threading import Thread
-from .ring_ble import RingBLE, RingEvent, RingConfig
 from concurrent.futures import ThreadPoolExecutor
 from utils.logger import logger
+from utils.counter import Counter
+from .ring_ble import RingBLE, RingEvent, RingConfig
 
 class Ring():
   def __init__(self, config:RingConfig, event_queue:queue.Queue):
@@ -13,12 +14,10 @@ class Ring():
     self.ring = RingBLE(config, event_callback=self.event_callback)
     self.disconnected = False
     self.imu_data_queue = queue.Queue()
-
-  async def connect_rings(self):
-    coroutines = [ring.connect() for ring in self.rings]
-    await asyncio.gather(*coroutines)
+    self.counter = Counter(print_interval=400)
 
   def event_callback(self, event:RingEvent):
+    self.counter.count(enable_print=False)
     self.event_queue.put_nowait(event)
 
   def blink(self, blink_color, blink_time):
@@ -32,7 +31,7 @@ class Ring():
     self.ring.send_action(action)
 
   def run(self):
-    asyncio.run(self.connect_rings())
+    asyncio.run(self.ring.connect())
 
 class RingPool():
   def __init__(self):
@@ -54,6 +53,7 @@ class RingPool():
     self.rings[config.address] = ring
     self.handlers[config.address] = set()
     self.executor.submit(ring.run)
+    return ring
 
   def get_ring(self, config:RingConfig, connect_when_miss:bool=None) -> Ring:
     if config.address in self.rings:

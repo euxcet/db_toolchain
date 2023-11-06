@@ -1,24 +1,27 @@
 {
-  "check_alive_after_sec": 15,
-  "object": [
+  "detector": [
     {
       "type": "GloveDetector",
       "num_classes": 11,
       "ip": "127.0.0.1",
       "port": 11002,
-      "model_file": "glove.pth",
-      "label": ["g_sniper", "g_hostage", "g_gather", "g_quick", "g_stop", "g_search", "g_ok", "g_safe", "g_danger", "g_prepare"],
+      "checkpoint_file": "glove.pth",
       "detection_interval": 10,
-      "group": [["g_sniper", "g_hostage", "g_gather", "g_quick", "g_stop", "g_search", "g_ok", "g_safe", "g_danger", "g_prepare"]]
+      "label": ["g_sniper", "g_hostage", "g_gather", "g_quick", "g_stop", "g_search", "g_ok", "g_safe", "g_danger", "g_prepare"],
+      "confidence_threshold": [0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
+      "trigger_wait_time": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "block": {}
     },
     {
       "type": "RingDetector",
       "num_classes": 28,
       "mac": "0D85597D-C82C-E839-E0E0-4776246A6398",
-      "model_file": "ring.pth",
-      "label": ["r_left", "r_forward", "r_up", "r_bomb", "r_close", "r_forward", "r_gather", "r_quick", "r_enemy", "r_cover", "r_repeat"],
+      "checkpoint_file": "ring.pth",
       "detection_interval": 10,
-      "group": [["r_left", "r_forward", "r_up"], ["r_bomb", "r_close", "r_forward", "r_gather", "r_quick", "r_enemy", "r_cover", "r_repeat"]]
+      "label": ["r_left", "r_forward", "r_up", "r_bomb", "r_close", "r_forward", "r_gather", "r_quick", "r_enemy", "r_cover", "r_repeat"],
+      "confidence_threshold": [0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
+      "trigger_wait_time": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "block": {}
     },
     {
       "type": "GestureAggregator",

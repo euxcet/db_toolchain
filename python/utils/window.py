@@ -46,8 +46,14 @@ class Window(Generic[_T]):
   def sum(self, func:function=lambda x:x):
     return sum(map(func, self.window))
 
-  def count(self, func:function=lambda x:x):
+  def count(self, func:function=lambda x:x) -> int:
     return len(list(filter(lambda x:x == True, map(func, self.window))))
+
+  def any(self, func:function=lambda x:x) -> bool:
+    return any(map(func, self.window))
+
+  def all(self, func:function=lambda x:x) -> bool:
+    return all(map(func, self.window))
 
   def map(self, func:function=lambda x:x) -> Window:
     return Window(self.window_length, list(map(func, self.window)))

@@ -11,7 +11,7 @@ from python.utils.window import Window
 from threading import Thread
 from python.model.fully_connected import FullyConnectedModel
 from queue import Queue
-from core.ble_ring import RingBLE, scan_rings
+from python.core.ring_ble import RingBLE, scan_rings
 
 class GloveGestureDetector(Thread):
   def __init__(self, handler, out_ip:str=None):

@@ -87,7 +87,7 @@ class RingBLE:
 
   def log_info(self, message):
     if not self.config.quiet_log:
-      logger.info(message)
+      logger.info(f'[Ring {self.config.name}] ' + message)
 
   def ble_notify_callback(self, sender, data):
     crc = self.crc16(data)
@@ -111,7 +111,7 @@ class RingBLE:
       report_path = (data[3] >> 2) & 0x3
       action_code = data[4]
       if op_type < 2:
-        self.log_info('touch action method: ' + ['HID', 'BLE', 'HID & BLE'][report_path])
+        self.log_info('Touch action method: ' + ['HID', 'BLE', 'HID & BLE'][report_path])
       elif op_type == 2:
         if self.event_callback is not None:
           self.event_callback(RingEvent(RingEventType.touch, action_code, time.time(), self.config.address))
@@ -155,9 +155,6 @@ class RingBLE:
           args = list(map(lambda x: x.split(':')[1], result.split(',')))
           acc_dict = {'0': '16g', '1': '8g', '2': '4g', '3': '2g'}
           gyro_dict = {'0': '2000dps', '1': '1000dps', '2': '500dps', '3': '250dps'}
-          self.acc_fsr = args[0]
-          self.gyro_fsr = args[1]
-          self.imu_freq = float(args[3])
           self.log_info('IMU ACC FSR: {}  IMU GYRO FSY: {}  IMU FREQ: {}Hz'.format(acc_dict[args[0]], gyro_dict[args[1]], args[3]))
         else:
           self.log_info(result)
@@ -240,7 +237,7 @@ class RingBLE:
     self.action_queue.put(action)
 
   async def connect(self):
-    if self.adapter is None:
+    if self.config.adapter is None:
       self.client = BleakClient(self.config.address)
     else:
       self.client = BleakClient(self.config.address, adapter=self.config.adapter)
@@ -262,7 +259,7 @@ class RingBLE:
     await self.send('TPOPS=' + '1,1,1' if self.config.enable_touch else '0,0,0')
     # imu
     if self.config.enable_imu != None:
-      await self.send('IMUARG=0,0,0,' + str(self.imu_freq))
+      await self.send('IMUARG=0,0,0,' + str(self.config.imu_freq))
       await self.send('ENDB6AX')
     self.set_color('B')
 

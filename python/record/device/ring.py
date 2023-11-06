@@ -2,7 +2,7 @@ import time
 import struct
 import asyncio
 import os.path as osp
-from core.ble_ring import RingBLE
+from python.core.ring_ble import RingBLE
 from core.imu_data import IMUData
 from utils.counter import Counter
 from utils.file_utils import make_dir

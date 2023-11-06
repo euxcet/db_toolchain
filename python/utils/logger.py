@@ -1,7 +1,7 @@
 import logging
 import colorlog
 
-output_log_filename = 'ma.log'
+output_log_filename = 'log.txt'
 logger = logging.getLogger('Ring')
 log_colors_config = {
   'DEBUG': 'white',

@@ -93,7 +93,7 @@ class SeparableConv(nn.Module):
         return x
 
 class GestureNetCNN(nn.Module):
-    def __init__(self, num_classes=18):
+    def __init__(self, num_classes:int):
         super(GestureNetCNN, self).__init__()
         self.conv1 = MBConv1(6, 12, (1, 9), stride=1, padding=(0, 4))  
         self.conv2 = MBConv6(12, 24, (1, 10), stride=2, padding=(0, 4)) 
