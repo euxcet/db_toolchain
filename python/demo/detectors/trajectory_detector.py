@@ -5,7 +5,7 @@ from utils.filter import OneEuroFilter
 from model.imu_trajectory_model import TrajectoryLSTMModel
 from demo.detector import Detector, DetectorEvent
 from sensor.imu_data import IMUData
-from sensor import Ring, RingEvent, RingEventType, ring_pool
+from sensor import Ring, RingEvent, RingEventType
 from sensor.glove import Glove
 
 class TrajectoryDetector(Detector):

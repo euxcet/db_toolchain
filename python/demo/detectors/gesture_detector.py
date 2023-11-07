@@ -1,17 +1,11 @@
 import time
 import torch
 import torch.nn.functional as F
-from threading import Thread
-from queue import Queue
-import torch
-from utils.counter import Counter
-from threading import Thread
-from queue import Queue
 from utils.window import Window
 from model.imu_gesture_model import GestureNetCNN
 from demo.detector import Detector, DetectorEvent
 from sensor.imu_data import IMUData
-from sensor import Ring, RingEvent, RingEventType, ring_pool
+from sensor import Ring, RingEvent, RingEventType
 from sensor.glove import Glove
 
 class GestureDetector(Detector):
@@ -25,6 +19,7 @@ class GestureDetector(Detector):
     self.last_gesture_time = [0] * arguments['num_classes']
     self.trigger_time = [0] * arguments['num_classes']
     self.block_until_time = [0] * arguments['num_classes']
+    self.threshold = self.arguments['confidence_threshold']
 
   def trigger(self, gesture_id:int, current_time:float):
     label:list[str] = self.arguments['label']
@@ -60,7 +55,7 @@ class GestureDetector(Detector):
       output_tensor = F.softmax(self.model(input_tensor).detach().cpu(), dim=1)
       gesture_id = torch.max(output_tensor, dim=1)[1].item()
       confidence = output_tensor[0][gesture_id].item()
-      if confidence > self.arguments['confidence_threshold'][gesture_id]:
+      if gesture_id < len(self.threshold) and confidence > self.threshold[gesture_id]:
         self.gesture_window.push(gesture_id)
         if current_time > self.last_gesture_time[gesture_id] + 1 and self.gesture_window.full() and \
            self.gesture_window.all(lambda x: x == gesture_id):
