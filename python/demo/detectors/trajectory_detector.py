@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 from utils.window import Window
@@ -9,16 +10,17 @@ from sensor import Ring, RingEvent, RingEventType
 from sensor.glove import Glove
 
 class TrajectoryDetector(Detector):
-  CALCULATE_STEP = 4
   TIMESTAMP_STEP = 0.02
   IMU_WINDOW_LEN = 20
-  EXECUTE_INTERVAL = 10
   MOVE_THRESHOLD = 0.1
   def __init__(self, device:Ring|Glove, handler=None, arguments:dict=dict()):
     super(TrajectoryDetector, self).__init__(TrajectoryLSTMModel(), device, handler, arguments)
     self.imu_window = Window[IMUData](self.IMU_WINDOW_LEN)
-    self.counter.execute_interval = self.EXECUTE_INTERVAL
-    self.touch_up()
+    self.counter.execute_interval = self.arguments['execute_interval']
+    self.touching = False
+    self.one_euro_filter = OneEuroFilter(np.zeros(2), 0)
+    self.stable_window = Window(5)
+    self.last_unstable_move = Window(20)
 
   def handle_detector_event(self, event:DetectorEvent):
     if event.detector == self.arguments['gesture_detector_name']:
@@ -28,13 +30,19 @@ class TrajectoryDetector(Detector):
         self.touch_up()
 
   def touch_down(self):
+    # for test
+    open('/Users/euxcet/.test', 'w')
     self.touching = True
 
   def touch_up(self):
+    # for test
+    if os.path.exists('/Users/euxcet/.test'):
+      os.remove('/Users/euxcet/.test')
     self.touching = False
     self.one_euro_filter = OneEuroFilter(np.zeros(2), 0)
-    self.broadcast_event(-self.last_unstable_move)
-    self.last_unstable_move = np.zeros(0, 0)
+    if self.last_unstable_move.capacity() > 0:
+      self.broadcast_event(-self.last_unstable_move.sum())
+      self.last_unstable_move.clear()
 
   def handle_ring_event(self, device, event:RingEvent):
     if event.event_type != RingEventType.imu:
@@ -43,9 +51,14 @@ class TrajectoryDetector(Detector):
     if self.counter.count() and self.imu_window.full() and self.touching:
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().reshape(1, self.IMU_WINDOW_LEN, 6)).to(self.device)
       output = self.model(input_tensor).detach().cpu().numpy().flatten()
-      if np.linalg.norm(output) < self.MOVE_THRESHOLD:
+
+      self.stable_window.push(np.linalg.norm(output) < self.MOVE_THRESHOLD)
+      if self.stable_window.last():
         output = np.zeros_like(output)
-        self.last_unstable_move = np.zeros(0, 0)
+
+      # if self.stable_window.full() and self.stable_window.all():
+      #   self.last_unstable_move.clear()
+
       move = self.one_euro_filter(output, dt=self.TIMESTAMP_STEP)
-      self.last_unstable_move += move
+      self.last_unstable_move.push(move)
       self.broadcast_event(move)

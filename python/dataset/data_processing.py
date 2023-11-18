@@ -120,9 +120,6 @@ def load_data(user, action, ring_filename, timestamp_filename, plot_data=False):
     ring_data: list of np.ndarray, shape=(200, 6)
     glove_data: list of np.ndarray, shape=(200, 16, 4)
     '''
-    # ring_filename = osp.join(DATA_DIR, person, action_id, "0_ring.bin")
-    # timestamp_filename = osp.join(DATA_DIR, person, action_id, "0_timestamp.txt")
-
     raw_ring_data = load_ring_data(ring_filename)
     raw_timestamp_data = load_timestamp_data(timestamp_filename)
 

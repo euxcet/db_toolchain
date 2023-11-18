@@ -21,7 +21,7 @@ class Ring():
     self.event_queue.put_nowait(event)
 
   def blink(self, blink_color, blink_time):
-    # TODO: use asyncio?
+    # TODO: use asyncio
     Thread(target=self.ring.blink(blink_color, blink_time)).start()
 
   def set_color(self, color):
@@ -34,17 +34,24 @@ class Ring():
     asyncio.run(self.ring.connect())
 
 class RingPool():
-  def __init__(self):
+  def __init__(self, keep_alive=True):
+    self.keep_alive = keep_alive
     # key is the address of the ring
     self.rings:dict[str, Ring] = {}
     self.handlers:dict[str, set] = {}
-    self.executor = ThreadPoolExecutor(max_workers=10, thread_name_prefix='Ring')
+    self.executor = ThreadPoolExecutor(max_workers=20, thread_name_prefix='Ring')
     self.event_queue:queue.Queue[RingEvent] = queue.Queue()
-    event_handler_thread = Thread(target=self.event_handler)
-    event_handler_thread.daemon = True
-    event_handler_thread.start()
+    event_distribution_thread = Thread(target=self.event_handler)
+    event_distribution_thread.daemon = True
+    event_distribution_thread.start()
+    if self.keep_alive:
+      keep_alive_thread = Thread(target=self.keep_alive_strategy)
+      keep_alive_thread.daemon = True
+      keep_alive_thread.start()
 
-  # TODO: use config to store address, ...
+  def keep_alive_strategy(self):
+    pass
+
   def add_ring(self, config:RingConfig) -> Ring:
     if config.address in self.rings:
       logger.warning(f'Ring[{config.address}] is already added.')
@@ -65,16 +72,14 @@ class RingPool():
     return None
 
   def bind_ring(self, event_handler, ring:Ring=None, config:RingConfig=None, address:str=None):
-    if ring is not None:
-      ring_address = ring.address
-    elif config is not None:
-      ring_address = config.address
-    elif address is not None:
-      ring_address = address
-    else:
-      ring_address = None
+    ring_address = None if address is None else address
+    ring_address = ring_address if config is None else config.address
+    ring_address = ring_address if ring is None else ring.address
     if ring_address is None:
       logger.error(f'The address for the ring is not provided.')
+      raise Exception()
+    if ring_address not in self.rings:
+      logger.error(f'Ring[{ring_address}] is not in the ring set.')
       raise Exception()
     self.handlers[ring_address].add(event_handler)
 
@@ -84,4 +89,4 @@ class RingPool():
       for handler in self.handlers[event.address]:
         handler(self.rings[event.address], event)
 
-ring_pool = RingPool()
+ring_pool = RingPool(keep_alive=True)

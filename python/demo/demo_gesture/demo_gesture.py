@@ -49,7 +49,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('-r', '--ring', type=str, default='0D85597D-C82C-E839-E0E0-4776246A6398')
   parser.add_argument('-g', '--glove', type=str, default='127.0.0.1')
-  parser.add_argument('-c', '--config', type=str, default='config/config.json')
+  parser.add_argument('-c', '--config', type=str, default='config/ring_only_config.json')
   args = parser.parse_args()
 
   config = load_json(args.config)

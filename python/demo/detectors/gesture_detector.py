@@ -14,8 +14,8 @@ class GestureDetector(Detector):
     super(GestureDetector, self).__init__(
       GestureNetCNN(num_classes=arguments['num_classes']), device, handler, arguments)
     self.imu_window = Window[IMUData](self.IMU_WINDOW_LEN)
-    self.gesture_window = Window(6) # TODO: config
-    self.counter.execute_interval = 10
+    self.gesture_window = Window(4) # TODO: config
+    self.counter.execute_interval = self.arguments['execute_interval']
     self.last_gesture_time = [0] * arguments['num_classes']
     self.trigger_time = [0] * arguments['num_classes']
     self.block_until_time = [0] * arguments['num_classes']
@@ -57,7 +57,7 @@ class GestureDetector(Detector):
       confidence = output_tensor[0][gesture_id].item()
       if gesture_id < len(self.threshold) and confidence > self.threshold[gesture_id]:
         self.gesture_window.push(gesture_id)
-        if current_time > self.last_gesture_time[gesture_id] + 1 and self.gesture_window.full() and \
+        if current_time > self.last_gesture_time[gesture_id] + 0.8 and self.gesture_window.full() and \
            self.gesture_window.all(lambda x: x == gesture_id):
            self.trigger(gesture_id, current_time)
            self.last_gesture_time[gesture_id] = current_time

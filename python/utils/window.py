@@ -10,8 +10,10 @@ class Window(Generic[_T]):
   def __init__(self, window_length:int, window:list[_T]=None):
     self.window_length = window_length
     self.window:list[_T] = [] if window is None else window
+    self.push_count = 0
   
   def push(self, data:_T):
+    self.push_count += 1
     self.window.append(data)
     if len(self.window) > self.window_length:
       self.window.pop(0)
@@ -70,10 +72,17 @@ class Window(Generic[_T]):
     return index, value
 
   def to_numpy(self):
-    return np.array(self.window)
+    try:
+      return np.array([d.to_numpy() for d in self.window])
+    except:
+      return np.array(self.window)
 
   def to_numpy_float(self):
-    return np.array(self.window).astype('float32')
+    return self.to_numpy().astype('float32')
+
+  def pad(self):
+    self.window += self.window[-1:] * (self.window_length - len(self.window))
+    return self
   
   def feature(self) -> list[float]:
     x = np.array(self.window)

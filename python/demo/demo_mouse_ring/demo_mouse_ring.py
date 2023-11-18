@@ -19,7 +19,6 @@ class MouseRing(Detector):
     if arguments['control_cursor']:
       from pynput.mouse import Controller
       self.mouse = Controller()
-      self.reset()
 
   def reset(self):
     if self.arguments['control_cursor']:
@@ -31,6 +30,8 @@ class MouseRing(Detector):
         scale = self.arguments['cursor_scale']
         self.mouse.move(event.data[0] * scale, event.data[1] * scale)
     if event.detector == self.arguments['gesture_detector_name']:
+      if event.data != 'move':
+        print(event.data)
       if self.arguments['control_cursor']:
         from pynput.mouse import Button
         if event.data == 'click':

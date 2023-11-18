@@ -9,16 +9,19 @@ import queue
 from enum import Enum
 from utils.file_utils import load_json
 from utils.logger import logger
+from utils.crc import crc16
 
 class RingLifeCircleEvent(Enum):
-  on_connect = 0
-  on_disconnect = 1
+  on_connecting = 0
+  on_connected = 1
+  on_disconnected = 2
 
 class RingEventType(Enum):
   lifecircle = 0
   imu = 1
   touch = 2
   battery = 3
+  heartbeat = 4
 
 class RingEvent():
   def __init__(self, event_type:RingEventType, data, timestamp:float, address:str):
@@ -76,36 +79,45 @@ class RingBLE:
     self.raw_imu_data = bytearray()
     self.color = None
 
-  def on_connected(self):
+  def trigger_event(self, event_type:RingEventType, data):
     if self.event_callback is not None:
-      self.event_callback(RingEvent(RingEventType.lifecircle, RingLifeCircleEvent.on_connect, time.time(), self.config.address))
+      self.event_callback(RingEvent(event_type, data, time.time(), self.config.address))
+
+  def on_connecting(self):
+    self.trigger_event(RingEventType.lifecircle, RingLifeCircleEvent.on_connecting)
+
+  def on_connected(self):
+    self.trigger_event(RingEventType.lifecircle, RingLifeCircleEvent.on_connected)
 
   def on_disconnect(self, clients):
     self.disconnected = True
-    if self.event_callback is not None:
-      self.event_callback(RingEvent(RingEventType.lifecircle, RingLifeCircleEvent.on_disconnect, time.time(), self.config.address))
+    self.trigger_event(RingEventType.lifecircle, RingLifeCircleEvent.on_disconnected)
 
   def log_info(self, message):
     if not self.config.quiet_log:
       logger.info(f'[Ring {self.config.name}] ' + message)
 
-  def ble_notify_callback(self, sender, data):
-    crc = self.crc16(data)
+  def log_error(self, message):
+    logger.error(f'[Ring {self.config.name}] ' + message)
+
+  def check_crc(self, data, offset):
+    crc = crc16(data, offset)
     crc_l = crc & 0xFF
     crc_h = (crc >> 8) & 0xFF
     if crc_l != data[1] or crc_h != data[2]:
-      logger.error('crc is wrong!')
+      self.error('CRC(cyclic Redundancy Check) is wrong.')
       return
 
+  def ble_notify_callback(self, sender, data):
+    self.check_crc(data, offset=3)
     if data[0] == self.EDPT_QUERY_SS:
-      if self.event_callback is not None:
-        self.event_callback(RingEvent(RingEventType.battery, data[15] & 0xFF, time.time(), self.config.address))
+      self.trigger_event(RingEventType.battery, data[15] & 0xFF)
     elif data[0] == self.EDPT_OP_GSENSOR_STATE:
       union_val = ((data[6] & 0xFF) << 24) | ((data[5] & 0xFF) << 16) | ((data[4] & 0xFF) << 8) | (data[3] & 0xFF)
       chip_state = union_val & 0x1
       work_state = (union_val >> 1) & 0x1
       step_count = (union_val >> 8) & 0x00FFFFFF
-      self.log_info('gsensor state {} {} {}'.format(chip_state, work_state, step_count))
+      self.log_info('Gsensor state {} {} {}'.format(chip_state, work_state, step_count))
     elif data[0] == self.EDPT_OP_TOUCH_ACTION:
       op_type = data[3] & 0x3
       report_path = (data[3] >> 2) & 0x3
@@ -113,8 +125,7 @@ class RingBLE:
       if op_type < 2:
         self.log_info('Touch action method: ' + ['HID', 'BLE', 'HID & BLE'][report_path])
       elif op_type == 2:
-        if self.event_callback is not None:
-          self.event_callback(RingEvent(RingEventType.touch, action_code, time.time(), self.config.address))
+        self.trigger_event(RingEventType.touch, action_code)
 
   def spp_notify_callback(self, sender, data:bytearray):
     if self.imu_mode:
@@ -132,11 +143,10 @@ class RingBLE:
           struct.unpack("f", imu_frame[16:20])[0],
           struct.unpack("f", imu_frame[20:24])[0],
           struct.unpack("f", imu_frame[24:28])[0],
-          struct.unpack("Q", imu_frame[28:36])[0]
+          (float)(struct.unpack("Q", imu_frame[28:36])[0])
         )
-        if self.event_callback is not None:
-          self.event_callback(RingEvent(RingEventType.imu, imu_data, time.time(), self.config.address))
-        crc = self.crc16(imu_frame, offset=4)
+        self.trigger_event(RingEventType.imu, imu_data)
+        crc = crc16(imu_frame, offset=4)
         if (crc & 0xFF) != imu_frame[2] or ((crc >> 8) & 0xFF) != imu_frame[3]:
           if not self.disconnected:
             self.send_action('disconnect')
@@ -159,20 +169,8 @@ class RingBLE:
         else:
           self.log_info(result)
 
-  def crc16(self, data, offset=3):
-    genpoly = 0xA001
-    result = 0xFFFF
-    for i in range(offset, len(data)):
-      result = (result & 0xFFFF) ^ (data[i] & 0xFF)
-      for _ in range(8):
-        if (result & 0x0001) == 1:
-          result = (result >> 1) ^ genpoly
-        else:
-          result = result >> 1
-    return result & 0xFFFF
-
-  def check_data(self, data, type):
-    crc = self.crc16(data)
+  def fill_crc(self, data, type):
+    crc = crc16(data)
     data[0] = type
     data[1] = crc & 0xFF
     data[2] = (crc >> 8) & 0xFF
@@ -180,12 +178,12 @@ class RingBLE:
 
   def query_system_conf(self):
     data = bytearray(4)
-    return self.check_data(data, self.EDPT_OP_SYS_CONF)
+    return self.fill_crc(data, self.EDPT_OP_SYS_CONF)
 
   def query_hrbo_state(self):
     data = bytearray(11)
     data[9] = 10
-    return self.check_data(data, self.EDPT_OP_HR_BO_STATE)
+    return self.fill_crc(data, self.EDPT_OP_HR_BO_STATE)
 
   def query_action_by_sel_bit(self, sel_bit):
     data = bytearray(6)
@@ -193,12 +191,12 @@ class RingBLE:
     data[3] = sel_bit & 0xFF
     data[4] = (sel_bit >> 8) & 0xFF
     data[5] = (sel_bit >> 16) & 0xFF
-    return self.check_data(data, self.EDPT_OP_ACTION_CLASS)
+    return self.fill_crc(data, self.EDPT_OP_ACTION_CLASS)
 
   def set_debug_hrbo(self, enable):
     data = bytearray(4)
     data[3] = 0x3 if enable else 0x1
-    return self.check_data(data, self.EDPT_OP_SYS_DEBUG_BIT)
+    return self.fill_crc(data, self.EDPT_OP_SYS_DEBUG_BIT)
 
   def query_power_sync_ts(self):
     data = bytearray(21)
@@ -207,13 +205,13 @@ class RingBLE:
     data[18] = (now_sec >> 8) & 0xFF
     data[19] = (now_sec >> 16) & 0xFF
     data[20] = (now_sec >> 24) & 0xFF
-    return self.check_data(data, self.EDPT_QUERY_SS)
+    return self.fill_crc(data, self.EDPT_QUERY_SS)
 
   def do_op_touch_action(self, get_or_set, path_code, action_code):
     data = bytearray(5)
     data[3] = ((path_code & 0x3) << 2) | (get_or_set & 0x3)
     data[4] = action_code
-    return self.check_data(data, self.EDPT_OP_TOUCH_ACTION)
+    return self.fill_crc(data, self.EDPT_OP_TOUCH_ACTION)
 
   def set_color(self, color):
     self.color = color
@@ -241,18 +239,18 @@ class RingBLE:
       self.client = BleakClient(self.config.address)
     else:
       self.client = BleakClient(self.config.address, adapter=self.config.adapter)
-    await self.client.connect()
 
+    self.on_connecting()
+    await self.client.connect()
     self.on_connected()
-    self.client.set_disconnected_callback(self.on_disconnect)
 
     self.log_info("Start notify")
+    self.client.set_disconnected_callback(self.on_disconnect)
     await self.client.start_notify(self.SPP_READ_CHARACTERISTIC, self.spp_notify_callback)
     await self.client.start_notify(self.NOTIFY_CHARACTERISTIC, self.ble_notify_callback)
 
     # disable hid
     await self.client.write_gatt_char(self.NOTIFY_CHARACTERISTIC, self.do_op_touch_action(1, 1, 0))
-
     await self.send('ENSPP')
     await self.send('ENFAST')
     # touch
@@ -263,9 +261,15 @@ class RingBLE:
       await self.send('ENDB6AX')
     self.set_color('B')
 
+    last_heartbeat_time = 0
     while True:
-      if not self.client.is_connected:
+      if not self.client.is_connected or self.disconnected:
         break
+      current_time = time.time()
+      if current_time > last_heartbeat_time + 1: 
+        last_heartbeat_time = current_time
+        if self.event_callback is not None:
+          self.event_callback(RingEvent(RingEventType.heartbeat, None, current_time, self.config.address))
       while not self.action_queue.empty():
         data = self.action_queue.get()
         if data == 'disconnect':
@@ -284,18 +288,3 @@ async def scan_rings():
       print('Found ring:', d.name, d.address)
       ring_macs.append(d.address)
   return ring_macs
-
-# TODO:
-
-# async def connect():
-#   ring_macs = await scan_rings()
-#   coroutines = []
-#   for i, ring_mac in enumerate(ring_macs):
-#     print(f'Found Ring {i}: UUID[{ring_mac}]')
-#     ring = BLERing(ring_mac, index=str(i), imu_callback=imu_callback)
-#     coroutines.append(ring.connect())
-
-#   await asyncio.gather(*coroutines)
-
-# if __name__ == '__main__':
-#   asyncio.run(connect())

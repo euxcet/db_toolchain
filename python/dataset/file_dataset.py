@@ -22,10 +22,9 @@ class FileDataset():
     result_dict = dict()
     users:list[str] = os.listdir(root)
     for user in users:
-      if self.is_valid_user(user):
-        classes = os.listdir(osp.join(root, user))
-        for class_ in classes:
-          if self.is_valid_class(class_):
+      if osp.isdir(osp.join(root, user)) and self.is_valid_user(user):
+        for class_ in os.listdir(osp.join(root, user)):
+          if osp.isdir(osp.join(root, user, class_)) and self.is_valid_class(class_):
             src_path = osp.join(root, user, class_)
             data_files = os.listdir(src_path)
             for f in data_files:
