@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 from abc import abstractmethod
 from utils.counter import Counter
-from sensor import Ring, RingEvent, RingEventType, ring_pool
-from sensor.glove import Glove
+from sensor import Ring, ring_pool
+from sensor.glove import Glove, glove_pool
 
 class DetectorEvent():
   def __init__(self, detector:str, data):
@@ -40,7 +40,7 @@ class Detector():
       if type(device) is Ring:
         ring_pool.bind_ring(self.handle_ring_event, ring=device)
       elif type(device) is Glove:
-        pass
+        glove_pool.bind_glove(self.handle_glove_event, glove=device)
     self.counter = Counter()
     self.handler = handler
     self.arguments = arguments

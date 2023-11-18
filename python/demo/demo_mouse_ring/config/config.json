@@ -2,6 +2,8 @@
   "gesture_detector": {
     "name": "GestureDetector",
     "num_classes": 5,
+    "imu_window_length": 200,
+    "result_window_length": 4,
     "checkpoint_file": "checkpoint/touch_all.pth",
     "execute_interval": 10,
     "label": ["touch_down", "touch_up", "move", "click", "double_click"],
