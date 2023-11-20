@@ -21,7 +21,7 @@
   "trajectory_detector": {
     "name": "TrajectoryDetector",
     "gesture_detector_name": "GestureDetector",
-    "checkpoint_file": "checkpoint/trajectory_right_vertical.pth",
+    "checkpoint_file": "checkpoint/trajectory_left_vertical.pth",
     "execute_interval": 3
   },
   "mouse_ring": {

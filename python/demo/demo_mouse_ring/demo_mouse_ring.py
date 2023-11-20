@@ -35,7 +35,8 @@ class MouseRing(Detector):
       if self.arguments['control_cursor']:
         from pynput.mouse import Button
         if event.data == 'click':
-          self.mouse.click(Button.left)
+          pass
+          # self.mouse.click(Button.left)
         elif event.data == 'double_click':
           self.reset()
 
