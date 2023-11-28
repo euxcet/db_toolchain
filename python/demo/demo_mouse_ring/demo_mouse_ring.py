@@ -5,6 +5,7 @@ sys.path.append(os.path.join(os.getcwd(), '../..'))
 import time
 import argparse
 from sensor import ring_pool, RingConfig
+from sensor.glove import glove_pool, Glove, GloveConfig
 from utils.file_utils import load_json
 from demo.detector import Detector, DetectorEvent
 from demo.detectors.trajectory_detector import TrajectoryDetector
@@ -30,8 +31,6 @@ class MouseRing(Detector):
         scale = self.arguments['cursor_scale']
         self.mouse.move(event.data[0] * scale, event.data[1] * scale)
     if event.detector == self.arguments['gesture_detector_name']:
-      if event.data != 'move':
-        print(event.data)
       if self.arguments['control_cursor']:
         from pynput.mouse import Button
         if event.data == 'click':
@@ -41,14 +40,18 @@ class MouseRing(Detector):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('-r', '--ring', type=str, default='0D85597D-C82C-E839-E0E0-4776246A6398')
+  # parser.add_argument('-r', '--ring', type=str, default='0D85597D-C82C-E839-E0E0-4776246A6398')
   parser.add_argument('-c', '--config', type=str, default='config/config.json')
   args = parser.parse_args()
-
-  ring = ring_pool.add_ring(RingConfig(args.ring, 'MouseRing'))
   config = load_json(args.config)
-  trajectory_detector = TrajectoryDetector(ring, handler=None, arguments=config['trajectory_detector'])
-  gesture_detector = GestureDetector(ring, handler=None, arguments=config['gesture_detector'])
+  if config['device']['type'] == 'ring':
+    ring = ring_pool.add_ring(RingConfig(config['device']['mac'], 'MouseRing'))
+    trajectory_detector = TrajectoryDetector(ring, handler=None, arguments=config['trajectory_detector'])
+    gesture_detector = GestureDetector(ring, handler=None, arguments=config['gesture_detector'])
+  elif config['device']['type'] == 'glove':
+    glove = glove_pool.add_glove(GloveConfig(config['device']['ip']))
+    trajectory_detector = TrajectoryDetector(glove, handler=None, arguments=config['trajectory_detector'])
+    gesture_detector = GestureDetector(glove, handler=None, arguments=config['gesture_detector'])
   mouse_ring = MouseRing(arguments=config['mouse_ring'])
   while True:
     time.sleep(1)

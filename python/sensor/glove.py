@@ -3,16 +3,16 @@ import queue
 import socket
 import struct
 from enum import Enum
-from utils.file_utils import load_json
-from utils.logger import logger
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 
+from sensor.basic_data import IMUData, QuaternionData
+from sensor.glove_data import GloveData
+from utils.logger import logger
+from utils.file_utils import load_json
+
 class GloveEventType(Enum):
-  basic = 0
-  imu_6axis = 1
-  imu_9axis = 2
-  quaternion = 3
+  pose = 0
 
 class GloveEvent():
   def __init__(self, event_type:GloveEventType, data, timestamp:float, address:tuple[str, int]):
@@ -37,7 +37,7 @@ class GloveVersion(Enum):
 
 class GloveConfig():
   # version: IMU_6AXIS IMU_9AXIS QUATERNION IMU_6AXIS_QUATERNION
-  def __init__(self, ip:str, port:int, name:str="Glove UNNAMED", version:str="IMU_6AXIS", quiet_log=False):
+  def __init__(self, ip:str, port:int=11002, name:str="Glove UNNAMED", version:str="IMU_6AXIS", quiet_log=False):
     self.ip = ip
     self.port = port
     self.name = name
@@ -67,25 +67,26 @@ class Glove():
   def trigger_event(self, event_type:GloveEventType, data, timestamp:float):
     self.event_queue.put_nowait(GloveEvent(event_type, data, timestamp, self.address))
 
+  def format_imu(self, data:tuple) -> tuple:
+    return (data[3] * -9.8, data[4] * -9.8, data[5] * -9.8, data[0], data[1], data[2])
+
   def parse_data(self, data):
+    current_time = time.time()
     joint_imus, joint_quaternions = None, None
     if data.decode('cp437').find('VRTRIX') == 0:
       if self.config.version == GloveVersion.quaternion:
-        radioStrength, battery, calScore = struct.unpack('hfh', data[265:273])
-        joint_quaternions = [struct.unpack('ffff', data[9 + 16 * i, 25 + 16 * i]) for i in range(16)]
+        radioStrength, battery, calScore = struct.unpack('<hfh', data[265:273])
+        joint_quaternions = [QuaternionData(struct.unpack('<ffff', data[9 + 16 * i: 25 + 16 * i]), current_time) for i in range(16)]
       elif self.config.version == GloveVersion.imu_6axis:
-        radioStrength, battery, calScore = struct.unpack('hfh', data[317:325])
-        joint_imus = [struct.unpack('fffffff', data[9 + 28 * i, 37 + 28 * i]) for i in range(11)]
+        radioStrength, battery, calScore = struct.unpack('<hfh', data[317:325])
+        joint_imus = [IMUData(self.format_imu(struct.unpack('<fffffff', data[9 + 28 * i: 37 + 28 * i])), current_time) for i in range(11)]
       elif self.config.version == GloveVersion.imu_6axis_quaternion:
-        radioStrength, battery, calScore = struct.unpack('hfh', data[573:581])
-        joint_imus = [struct.unpack('fffffff', data[9 + 28 * i, 37 + 28 * i]) for i in range(11)]
-        joint_quaternions = [struct.unpack('ffff', data[317 + 16 * i, 333 + 16 * i]) for i in range(16)]
-      current_time = time.time()
-      self.trigger_event(GloveEventType.basic, {'radioStrength': radioStrength, 'battery': battery, 'calScore': calScore}, current_time)
-      if joint_imus is not None:
-        self.trigger_event(GloveEventType.imu_6axis, joint_imus, current_time)
-      if joint_quaternions is not None:
-        self.trigger_event(GloveEventType.quaternion, joint_quaternions, current_time)
+        radioStrength, battery, calScore = struct.unpack('<hfh', data[573:581])
+        joint_imus = [IMUData(self.format_imu(struct.unpack('<fffffff', data[9 + 28 * i: 37 + 28 * i])), current_time) for i in range(11)]
+        joint_quaternions = [QuaternionData(struct.unpack('<ffff', data[317 + 16 * i: 333 + 16 * i]), current_time) for i in range(16)]
+      self.trigger_event(GloveEventType.pose,
+                         GloveData({'radioStrength': radioStrength, 'battery': battery, 'calScore': calScore},
+                                   joint_imus, joint_quaternions, current_time), current_time)
   
   def run(self):
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

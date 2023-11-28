@@ -4,7 +4,7 @@ import time
 import asyncio
 import struct
 from bleak import BleakScanner, BleakClient
-from .imu_data import IMUData
+from .basic_data import IMUData
 import queue
 from enum import Enum
 from utils.file_utils import load_json

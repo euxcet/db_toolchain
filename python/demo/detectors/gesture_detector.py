@@ -5,15 +5,17 @@ import torch.nn.functional as F
 from utils.window import Window
 from model.imu_gesture_model import GestureNetCNN
 from demo.detector import Detector, DetectorEvent
-from sensor.imu_data import IMUData
+from sensor.basic_data import IMUData
 from sensor import Ring, RingEvent, RingEventType
 from sensor.glove import Glove, GloveEvent, GloveEventType
+from sensor.glove_data import GloveData, GloveIMUJointName
 
 class GestureDetector(Detector):
   def __init__(self, device:Ring|Glove=None, handler=None, arguments:dict=dict()):
     super(GestureDetector, self).__init__(
       model=GestureNetCNN(num_classes=arguments['num_classes']), device=device,
       handler=handler, arguments=arguments)
+    self.counter.print_interval = 1000
     self.imu_window_length = self.arguments['imu_window_length']
     self.imu_window = Window[IMUData](self.imu_window_length)
     self.result_window = Window(self.arguments['result_window_length'])
@@ -46,7 +48,7 @@ class GestureDetector(Detector):
     
   def detect(self, data):
     self.imu_window.push(data)
-    if self.counter.count() and self.imu_window.full():
+    if self.counter.count(enable_print=True, print_fps=True) and self.imu_window.full():
       current_time = time.time()
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().T
                                   .reshape(1, 6, 1, self.imu_window_length)).to(self.device)
@@ -71,6 +73,6 @@ class GestureDetector(Detector):
       self.detect(event.data.to_numpy())
 
   def handle_glove_event(self, device, event:GloveEvent):
-    if event.event_type == GloveEventType.imu_6axis:
-      gyr_x, gyr_y, gyr_z, acc_x, acc_y, acc_z = event.data[3]
-      self.detect(np.array([acc_x, acc_y, acc_z, -9.8 * gyr_x, -9.8 * gyr_y, -9.8 * gyr_z]))
+    if event.event_type == GloveEventType.pose:
+      data:GloveData = event.data
+      self.detect(data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())

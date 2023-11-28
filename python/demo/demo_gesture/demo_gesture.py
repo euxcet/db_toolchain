@@ -6,6 +6,7 @@ import time
 import argparse
 import numpy as np
 from sensor import ring_pool, RingConfig
+from sensor.glove import glove_pool, GloveConfig
 from utils.file_utils import load_json
 from demo.detector import Detector, DetectorEvent
 from demo.detectors.gesture_detector import GestureDetector
@@ -58,7 +59,7 @@ if __name__ == '__main__':
     ring = ring_pool.add_ring(RingConfig(args.ring, 'GestureRing'))
     ring_gesture_detector = GestureDetector(ring, handler=None, arguments=config['ring_gesture_detector'])
   if 'glove_gesture_detector' in config:
-    glove = None
+    glove = glove_pool.add_glove(GloveConfig(ip=args.glove))
     glove_gesture_detector = GestureDetector(glove, handler=None, arguments=config['glove_gesture_detector'])
 
   mouse_ring = GestureAggregator(arguments=config['gesture_aggregator'])

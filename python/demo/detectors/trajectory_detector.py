@@ -5,9 +5,10 @@ from utils.window import Window
 from utils.filter import OneEuroFilter
 from model.imu_trajectory_model import TrajectoryLSTMModel
 from demo.detector import Detector, DetectorEvent
-from sensor.imu_data import IMUData
+from sensor.basic_data import IMUData
 from sensor import Ring, RingEvent, RingEventType
 from sensor.glove import Glove, GloveEvent, GloveEventType
+from sensor.glove_data import GloveData, GloveIMUJointName
 
 class TrajectoryDetector(Detector):
   TIMESTAMP_STEP = 0.02
@@ -61,6 +62,7 @@ class TrajectoryDetector(Detector):
       self.detect(event.data.to_numpy())
 
   def handle_glove_event(self, device, event:GloveEvent):
-    if event.event_type == GloveEventType.imu_6axis:
-      gyr_x, gyr_y, gyr_z, acc_x, acc_y, acc_z = event.data[3]
-      self.detect(np.array([acc_x, acc_y, acc_z, -9.8 * gyr_x, -9.8 * gyr_y, -9.8 * gyr_z]))
+    if event.event_type == GloveEventType.pose:
+      data:GloveData = event.data
+      # print(data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())
+      self.detect(data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())

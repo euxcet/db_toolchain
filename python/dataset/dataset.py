@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from .data_processing import load_data, load_glove_data
 from .file_dataset import FileDataset
-from sensor.imu_data import IMUData
+from sensor.basic_data import IMUData
 from utils.window import Window
 
 class GestureDataset(Dataset):

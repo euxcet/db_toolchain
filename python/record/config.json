@@ -1,0 +1,14 @@
+{
+  "save_dir": "./dataset/",
+  "samples_per_round": 10,
+  "sample_time": 1.0,
+  "restore_time": 1.0,
+  "categories": ["touch_down", "touch_up", "move", "click", "double_click"],
+  "devices": [
+    {
+      "type": "glove",
+      "ip": "169.254.6.2",
+      "version": "IMU_6AXIS"
+    }
+  ]
+}
