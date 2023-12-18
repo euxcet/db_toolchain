@@ -74,5 +74,4 @@ class GestureDetector(Detector):
 
   def handle_glove_event(self, device, event:GloveEvent):
     if event.event_type == GloveEventType.pose:
-      data:GloveData = event.data
-      self.detect(data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())
+      self.detect(event.data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())

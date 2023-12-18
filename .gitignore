@@ -188,5 +188,5 @@ Temporary Items
 .apdisk
 
 *.zip
-
+nohup.out
 log.txt

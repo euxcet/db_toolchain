@@ -44,8 +44,8 @@ class TrajectoryDetector(Detector):
       self.stable_window.push(np.linalg.norm(output) < self.MOVE_THRESHOLD)
       if self.stable_window.last():
         output = np.zeros_like(output)
-      # if self.stable_windsw.full() and self.stable_window.all():
-      #   self.last_unstable_move.clear()
+      if self.stable_window.full() and self.stable_window.all():
+        self.last_unstable_move.clear()
       move = self.one_euro_filter(output, dt=self.TIMESTAMP_STEP)
       self.last_unstable_move.push(move)
       self.broadcast_event(move)
@@ -63,6 +63,4 @@ class TrajectoryDetector(Detector):
 
   def handle_glove_event(self, device, event:GloveEvent):
     if event.event_type == GloveEventType.pose:
-      data:GloveData = event.data
-      # print(data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())
-      self.detect(data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())
+      self.detect(event.data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())
