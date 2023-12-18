@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from .data_processing import load_data, load_glove_data
 from .file_dataset import FileDataset
-from sensor.imu_data import IMUData
+from sensor.basic_data import IMUData
 from utils.window import Window
 
 class GestureDataset(Dataset):
@@ -95,7 +95,6 @@ def pad_or_cut(data, length:int):
     return data[:length]
 
 def load_data(ring_filename, timestamp_filename, fps=200, lowest_fps=180, highest_fps=220):
-  print(ring_filename)
   raw_ring_data:list[IMUData] = load_ring_data(ring_filename)
   raw_timestamp_data = load_timestamp_data(timestamp_filename)
 
@@ -121,7 +120,6 @@ def get_gesture_dataset(root, class_map=None):
     file_dataset = FileDataset(root)
     
     for user, class_, number, files in file_dataset.records:
-      print(files)
       ring_filename = osp.join(root, user, class_, number + '_ring.bin')
       glove_filename = osp.join(root, user, class_, number + '_glove.bin')
       timestamp_filename = osp.join(root, user, class_, number + '_timestamp.txt')

@@ -45,10 +45,10 @@ def train(args):
     # loop = tqdm()
     model.train()
     for batch_id, (data, target) in enumerate(train_loader):
-      print(batch_id)
       optimizer.zero_grad()
       output = model(data)
       loss = criterion(output, target)
+      print(output)
       fabric.backward(loss)
       optimizer.step()
     scheduler.step()
@@ -84,7 +84,7 @@ if __name__ == '__main__':
   parser.add_argument("--save-model", action="store_true", default=False, help="for saving the current Model")
   parser.add_argument("--train-ratio", type=float, default=0.8, help="ratio of training dataset size")
   parser.add_argument("--dataset-path", default='./local_dataset/trajectory/touch_dataset', help="dataset location")
-  parser.add_argument("--num-classes", default=False, type=int, help="number of classes")
+  parser.add_argument("--num-classes", required=True, type=int, help="number of classes")
   parser.add_argument("--save-model-path", default="gesture.pth", help="save path of the output model")
   args = parser.parse_args()
 

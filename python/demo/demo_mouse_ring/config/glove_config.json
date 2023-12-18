@@ -1,8 +1,14 @@
 {
+  "device": {
+    "type": "glove",
+    "ip": "169.254.6.2"
+  },
   "gesture_detector": {
     "name": "GestureDetector",
     "num_classes": 5,
-    "checkpoint_file": "checkpoint/touch_all.pth",
+    "imu_window_length": 200,
+    "result_window_length": 4,
+    "checkpoint_file": "checkpoint/touch_glove.pth",
     "execute_interval": 10,
     "label": ["touch_down", "touch_up", "move", "click", "double_click"],
     "confidence_threshold": [0.7, 0.9, 0.9, 0.9, 0.9],
@@ -21,7 +27,7 @@
   "trajectory_detector": {
     "name": "TrajectoryDetector",
     "gesture_detector_name": "GestureDetector",
-    "checkpoint_file": "checkpoint/trajectory_left_vertical.pth",
+    "checkpoint_file": "checkpoint/trajectory_glove.pth",
     "execute_interval": 3
   },
   "mouse_ring": {

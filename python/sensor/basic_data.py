@@ -3,6 +3,23 @@ from __future__ import annotations
 import math
 import numpy as np
 from multipledispatch import dispatch
+from pyquaternion import Quaternion
+
+class QuaternionData():
+  @dispatch(float, float, float, float, float)
+  def __init__(self, w:float, x:float, y:float, z:float, timestamp:float):
+    self.quaternion = Quaternion(w, x, y, z)
+    self.w = w
+    self.x = x
+    self.y = y
+    self.z = z
+    self.timestamp = timestamp
+
+  @dispatch
+  def __init__(self, data:tuple, timestamp:float):
+    if len(data) == 4:
+      self.__init__(*data, timestamp)
+    raise NotImplementedError
 
 class IMUData():
   @dispatch(float, float, float, float, float, float, float)
@@ -18,6 +35,13 @@ class IMUData():
     self.acc_np = np.array([self.acc_x, self.acc_y, self.acc_z])
     self.gyr_np = np.array([self.gyr_x, self.gyr_y, self.gyr_z])
     self.imu_np = np.concatenate((self.acc_np, self.gyr_np), axis=0)
+  
+  @dispatch(tuple, float)
+  def __init__(self, data:tuple, timestamp:float):
+    if len(data) == 6:
+      self.__init__(*data, timestamp)
+    else:
+      raise NotImplementedError
 
   @dispatch(dict)
   def __init__(self, data:dict):
@@ -42,20 +66,3 @@ class IMUData():
 
   def to_numpy(self):
     return np.array([self.acc_x, self.acc_y, self.acc_z, self.gyr_x, self.gyr_y, self.gyr_z])
-
-class IMUDataGroup():
-  def __init__(self, data:list[IMUData]):
-    self.data = data
-
-  def __getitem__(self, index) -> IMUData:
-    return self.data[index]
-
-  def __str__(self):
-    return '\n'.join(map(str, self.data)) + '\n'
-
-  def to_numpy(self):
-    return np.array([x[j] for x in self.data for j in range(6)])
-
-  @property
-  def timestamp(self):
-    return self.data[0].timestamp

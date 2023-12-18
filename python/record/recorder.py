@@ -1,29 +1,34 @@
+import os
+import sys
+sys.path.append(os.path.join(os.getcwd(), '..'))
+
 import time
 import argparse
 import itertools
 import os.path as osp
 from pynput import keyboard
 from record.device import get_devices
+from utils.file_utils import load_json
 
 class Recorder():
-  def __init__(self, args):
+  def __init__(self, args, config):
+    self.config = config
     self.user = args.user
-    self.action = args.action
-    self.sample_number = args.number
 
-    # TODO query save_dir from the dataset manager.
-    self.save_dir = args.save_dir
+    self.categories = config['categories']
+    self.category = self.get_category(args.category)
+
+    self.samples_per_round = config['samples_per_round']
+    self.save_dir = config['save_dir']
+    self.sample_time = config['sample_time']
+    self.restore_time = config['restore_time']
 
     self.listener = keyboard.Listener(on_press=self.on_press)
-    # devices
-    self.devices = get_devices(args.device)
+    print(self.config['devices'])
+    self.devices = get_devices(self.config['devices'])
     self.set_device_save_dir()
-    
+    print('User: {}   Category: {}'.format(self.user, self.category))
     self.running = True
-    self.processing = False
-
-    self.sample_time = args.sample_time
-    self.restore_time = args.restore_time
 
   # life cycle
   def start(self):
@@ -60,6 +65,8 @@ class Recorder():
       device.end_sample(sample_id)
 
   def get_round_id(self):
+    if len(self.devices) == 0:
+      return 0
     for round_id in itertools.count():
       if any([not device.exist_save_file(round_id) for device in self.devices]):
         return round_id
@@ -76,52 +83,58 @@ class Recorder():
 
   # handle keyboard events
   def on_press(self, key):
-    if self.processing:
-      print('Ignore key')
-      return
-    self.processing = True
-    if key == keyboard.Key.space:
-      self.record()
-    try:
-      {'.': self.stop, 'a': self.switch_action, 'u': self.switch_user, 'n': self.switch_number}[key.char]()
-    except:
-      pass
-    self.processing = False
+    functions = {
+      '.': self.stop,
+      'c': self.switch_category,
+      'u': self.switch_user,
+      'n': self.switch_number,
+      keyboard.Key.space: self.record,
+    }
+    if hasattr(key, 'char'):
+      if key.char in functions:
+        functions[key.char]()
+    else:
+      if key in functions:
+        functions[key]()
 
-  def switch_action(self):
-    action = input('Input new action name:')
-    print(f'Change action to {action}')
-    self.action = action
+  def switch_category(self):
+    category = input('Input the category id or category name (type int/string):')
+    self.category = self.get_category(category)
     self.set_device_save_dir()
+    print(f'OK,', self.category)
 
   def switch_user(self):
-    user = input('Input new user name:')
-    print(f'Change user to {user}')
+    user = input('Input the user name (type string):')
     self.user = user
     self.set_device_save_dir()
+    print(f'OK,', self.user)
 
   def switch_number(self):
-    number = input('Input number of samples:')
-    print(f'Change number of samples to {number}')
+    number = input('Input the number of samples in each round (type int):')
+    assert number.isdigit()
     self.sample_number = int(number)
+    print(f'OK', self.sample_number)
 
   def set_device_save_dir(self):
     for device in self.devices:
-      device.set_save_dir(osp.join(self.save_dir, self.user, self.action))
+      device.set_save_dir(osp.join(self.save_dir, self.user, self.category))
+
+  def get_category(self, category:str):
+    # TODO: handle exception
+    if category in self.categories:
+      return category
+    elif category.isdigit():
+      return self.categories[int(category)]
+    raise NotImplementedError()
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('--name', type=str, required=True)
   parser.add_argument('--user', type=str, required=True)
-  parser.add_argument('--action', type=str, required=True)
-  parser.add_argument('--number', type=int, required=True, default=10)
-  parser.add_argument('--device', type=str, required=True)
-  parser.add_argument('--sample_time', type=float, required=False, default=1.0)
-  parser.add_argument('--restore_time', type=float, required=False, default=1.0)
+  parser.add_argument('--category', type=str, required=True)
+  parser.add_argument('--config', type=str, required=True)
   args = parser.parse_args()
-  # todo: help
 
-  recorder = Recorder(args)
+  recorder = Recorder(args, load_json(args.config))
   recorder.start()
 
   while recorder.running:

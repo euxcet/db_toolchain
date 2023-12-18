@@ -1,26 +1,14 @@
 {
-  "ring_gesture_detector": {
-    "name": "RingGestureDetector",
+  "glove_gesture_detector": {
+    "name": "GestureDetector",
     "num_classes": 28,
     "imu_window_length": 200,
     "result_window_length": 4,
-    "checkpoint_file": "checkpoint/ring.pth",
+    "checkpoint_file": "checkpoint/glove_imu_xj_verion_1020.pth",
     "execute_interval": 10,
-    "label": ["r_move", "r_move", "r_move", "r_bomb", "r_close", "r_forward", "r_gather", "r_quick", "r_enemy", "r_cover", "r_repeat"],
-    "confidence_threshold": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
-    "trigger_wait_time": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    "block": { }
-  },
-  "glove_gesture_detector": {
-    "name": "GloveGestureDetector",
-    "num_classes": 11,
-    "imu_window_length": 200,
-    "result_window_length": 4,
-    "checkpoint_file": "checkpoint/glove_xj_version_1007.pth",
-    "execute_interval": 10,
-    "label": ["g_sniper", "g_hostage", "g_gather", "g_quick", "g_stop", "g_search", "g_ok", "g_safe", "g_danger", "g_prepare", "negative"],
-    "confidence_threshold": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 2.0],
-    "trigger_wait_time": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "label": ["", "g_front", "", "g_right", "g_two", "g_start", "g_stop", "g_prepare", "", "", "", "", "", "", "g_one", "g_gather", "g_enemy"],
+    "confidence_threshold": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
+    "trigger_wait_time": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     "block": { }
   },
   "gesture_aggregator": {
