@@ -1,22 +1,19 @@
 import os
 import os.path as osp
+from utils.file_utils import load_json
 
 class FileDataset():
   def __init__(self, root:str):
+    self.check_dataset(root)
+    self.config = load_json(self._config_path)
+    self.label_name = self.config['label'] # key is the directory name
+    self.label_id = {dir_name: id for id, dir_name in enumerate(self.label_name)}
     self.records = self.load_from_dir(root)
-    self.label_id = self.get_label_id()
 
-  def get_label_id(self):
-    # TODO
-    label_id = {str(i): i for i in range(100)}
-    return label_id
-    label_id = dict()
-    label_count = 0
-    for _, class_, _, _ in self.records:
-      if class_ not in label_id:
-        label_id[class_] = label_count
-        label_count += 1
-    return label_id
+  def check_dataset(self, root:str):
+    self._config_path = osp.join(root, 'config.json')
+    if not osp.exists(self._config_path):
+      raise Exception(f'The config.json file does not exist in the root directory of the dataset[{root}].')
 
   def load_from_dir(self, root:str):
     result_dict = dict()

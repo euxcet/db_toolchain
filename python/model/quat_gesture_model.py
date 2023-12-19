@@ -1,9 +1,7 @@
-import torch
-from torch import device, nn
-import torch.nn.functional as F
+from torch import nn
 
 class FullyConnectedModel(nn.Module):
-  def __init__(self, class_num):
+  def __init__(self, num_classes):
     super(FullyConnectedModel, self).__init__()
     self.fc0 = nn.Linear(64, 256)
     self.relu0 = nn.ReLU()
@@ -11,7 +9,7 @@ class FullyConnectedModel(nn.Module):
     self.relu1 = nn.ReLU()
     self.fc2 = nn.Linear(128, 32)
     self.relu2 = nn.ReLU()
-    self.fc3 = nn.Linear(32, class_num)
+    self.fc3 = nn.Linear(32, num_classes)
 
   def forward(self, x):
     x = self.fc0(x)

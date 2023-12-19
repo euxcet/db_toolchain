@@ -8,7 +8,7 @@ from torch.nn import functional as F
 from torch.optim.lr_scheduler import _LRScheduler
 from matplotlib import pyplot as plt
 from sklearn import metrics
-from python.model.fully_connected import FullyConnectedModel
+from model.quat_gesture_model import FullyConnectedModel
 
 def get_dataset(users):
   all_data = []
