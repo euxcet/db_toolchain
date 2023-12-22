@@ -20,7 +20,7 @@ class QuatGestureDataset(Dataset):
 def map_class(class_:int, class_map:dict):
   return class_ if class_map is None else class_map[class_]
 
-def get_quat_gesture_dataset(root, class_map=None):
+def get_quat_gesture_dataset(root:str, class_map=None):
   data, labels = [], []
   file_dataset = FileDataset(root)
   for user, class_, number, _ in file_dataset.records:

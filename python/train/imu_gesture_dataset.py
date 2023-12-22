@@ -20,7 +20,7 @@ class IMUGestureDataset(Dataset):
   def get_labels(self):
     return self.labels
 
-def load_glove_data(filename):
+def load_glove_data(filename:str):
   glove_data = []
   with open(filename, 'rb') as f:
     data = f.read(320)
@@ -32,7 +32,7 @@ def load_glove_data(filename):
       data = f.read(320)
   return glove_data
 
-def load_ring_data(filename):
+def load_ring_data(filename:str):
   ring_data = []
   with open(filename, 'rb') as f:
     data = f.read(36)
@@ -42,7 +42,7 @@ def load_ring_data(filename):
       data = f.read(36)
   return ring_data
 
-def load_timestamp_data(filename):
+def load_timestamp_data(filename:str):
   with open(filename, 'r') as f:
     lines = list(filter(lambda x: len(x) > 0, [x.strip() for x in f.readlines()]))
     return [list(map(float, x.strip().split(' '))) for x in lines]
@@ -50,7 +50,7 @@ def load_timestamp_data(filename):
 def map_class(class_:int, class_map:dict):
   return class_ if class_map is None else class_map[class_]
 
-def get_imu_gesture_dataset(root, class_map=None):
+def get_imu_gesture_dataset(root:str, class_map=None):
   data, labels = [], []
   file_dataset = FileDataset(root)
   for user, class_, number, _ in file_dataset.records:

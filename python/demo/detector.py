@@ -1,7 +1,7 @@
 from __future__ import annotations
 import torch
 import torch.nn as nn
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from utils.counter import Counter
 from sensor import Ring, ring_pool
 from sensor.glove import Glove, glove_pool
@@ -53,10 +53,8 @@ class Detector():
     broadcaster.broadcast_event(event)
 
   @property
-  @abstractmethod
   def name(self):
     return self.arguments['name']
 
-  @abstractmethod
   def handle_detector_event(self, event:DetectorEvent):
     pass
