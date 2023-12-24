@@ -50,19 +50,20 @@ def load_timestamp_data(filename:str):
 def map_class(class_:int, class_map:dict):
   return class_ if class_map is None else class_map[class_]
 
-def get_imu_gesture_dataset(root:str, class_map=None):
+def get_imu_gesture_dataset(roots:list[str], class_map=None):
   data, labels = [], []
-  file_dataset = FileDataset(root)
-  for user, class_, number, _ in file_dataset.records:
-    ring_filename = osp.join(root, user, class_, number + '_ring.bin')
-    glove_filename = osp.join(root, user, class_, number + '_glove.bin')
-    timestamp_filename = osp.join(root, user, class_, number + '_timestamp.txt')
-    if osp.exists(ring_filename) and osp.exists(timestamp_filename):
-      sliced_data = slice_data(load_ring_data(ring_filename), load_timestamp_data(timestamp_filename))
-      data.extend(sliced_data)
-      labels.extend([map_class(file_dataset.label_id[class_], class_map)] * len(sliced_data))
-    if osp.exists(glove_filename) and osp.exists(timestamp_filename):
-      sliced_data = slice_data(load_glove_data(glove_filename), load_timestamp_data(timestamp_filename))
-      data.extend(sliced_data)
-      labels.extend([map_class(file_dataset.label_id[class_], class_map)] * len(sliced_data))
+  for root in roots:
+    file_dataset = FileDataset(root)
+    for user, class_, number, _ in file_dataset.records:
+      ring_filename = osp.join(root, user, class_, number + '_ring.bin')
+      glove_filename = osp.join(root, user, class_, number + '_glove.bin')
+      timestamp_filename = osp.join(root, user, class_, number + '_timestamp.txt')
+      if osp.exists(ring_filename) and osp.exists(timestamp_filename):
+        sliced_data = slice_data(load_ring_data(ring_filename), load_timestamp_data(timestamp_filename))
+        data.extend(sliced_data)
+        labels.extend([map_class(file_dataset.label_id[class_], class_map)] * len(sliced_data))
+      if osp.exists(glove_filename) and osp.exists(timestamp_filename):
+        sliced_data = slice_data(load_glove_data(glove_filename), load_timestamp_data(timestamp_filename))
+        data.extend(sliced_data)
+        labels.extend([map_class(file_dataset.label_id[class_], class_map)] * len(sliced_data))
   return IMUGestureDataset(np.array(data, dtype=np.float32), np.array(labels))

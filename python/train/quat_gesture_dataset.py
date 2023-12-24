@@ -20,12 +20,13 @@ class QuatGestureDataset(Dataset):
 def map_class(class_:int, class_map:dict):
   return class_ if class_map is None else class_map[class_]
 
-def get_quat_gesture_dataset(root:str, class_map=None):
-  data, labels = [], []
-  file_dataset = FileDataset(root)
-  for user, class_, number, _ in file_dataset.records:
-    data_filename = osp.join(root, user, class_, number + '_glove.npy')
-    new_data = np.load(data_filename).tolist()
-    data.extend(new_data)
-    labels.extend([map_class(file_dataset.label_id[class_], class_map)] * len(new_data))
+def get_quat_gesture_dataset(roots:list[str], class_map=None):
+  for root in roots:
+    data, labels = [], []
+    file_dataset = FileDataset(root)
+    for user, class_, number, _ in file_dataset.records:
+      data_filename = osp.join(root, user, class_, number + '_glove.npy')
+      new_data = np.load(data_filename).tolist()
+      data.extend(new_data)
+      labels.extend([map_class(file_dataset.label_id[class_], class_map)] * len(new_data))
   return QuatGestureDataset(np.array(data, dtype=np.float32), np.array(labels))
