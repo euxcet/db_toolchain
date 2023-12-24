@@ -3,11 +3,12 @@ import os.path as osp
 from utils.file_utils import load_json
 
 class FileDataset():
-  def __init__(self, root:str):
+  def __init__(self, root:str, has_label=True):
     self.check_dataset(root)
     self.config = load_json(self._config_path)
-    self.label_name = self.config['label'] # key is the directory name
-    self.label_id = {dir_name: id for id, dir_name in enumerate(self.label_name)}
+    if has_label:
+      self.label_name = self.config['label'] # key is the directory name
+      self.label_id = {dir_name: id for id, dir_name in enumerate(self.label_name)}
     self.records = self.load_from_dir(root)
 
   def check_dataset(self, root:str):
@@ -27,7 +28,10 @@ class FileDataset():
             for f in data_files:
               if self.is_valid_data_file(f):
                 number = f.split('_')[0]
-                id = (user, class_, number)
+                if not f.split('_')[1].isdigit():
+                  id = (user, class_, number)
+                else:
+                  id = (user, class_, number, f.split('_')[1])
                 if id in result_dict:
                   result_dict[id].append(f)
                 else:

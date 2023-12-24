@@ -53,3 +53,4 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   QuatGestureTrainer(**vars(args)).train()
+  # python train_quat_gesture.py --num-classes=11 --dataset-path=./local_dataset/glove_dataset

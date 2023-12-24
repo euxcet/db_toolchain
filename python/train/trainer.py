@@ -11,7 +11,7 @@ from lightning.fabric import Fabric, seed_everything
 from train.metric import MetricGroup
 
 class Trainer(metaclass=ABCMeta):
-  def __init__(self, num_classes:int, batch_size:int, epochs:int, lr:float, gamma:float, seed:int,
+  def __init__(self, num_classes:int, batch_size:int, epochs:int, lr:float, gamma:float, seed:int, log_interval:int,
                train_ratio:float, valid_ratio:float, dataset_path:float, output_model_name:float, **kwargs):
     self.num_classes = num_classes
     self.batch_size = batch_size
@@ -19,6 +19,7 @@ class Trainer(metaclass=ABCMeta):
     self.lr = lr
     self.gamma = gamma
     self.seed = seed
+    self.log_interval = log_interval
     self.train_ratio = train_ratio
     self.valid_ratio = valid_ratio
     self.dataset_path = dataset_path.strip().split(',')
@@ -36,7 +37,8 @@ class Trainer(metaclass=ABCMeta):
   def train(self):
     for epoch in range(1, self.epochs + 1):
       self.train_epoch(epoch)
-      self.log_epoch(epoch)
+      if epoch % self.log_interval == 0:
+        self.log_epoch(epoch)
 
   def update_best_metric(self, metric) -> bool:
     if self.best_metric is None or metric > self.best_metric:
@@ -110,7 +112,7 @@ class Trainer(metaclass=ABCMeta):
     pass
 
 def add_argument(parser:argparse.ArgumentParser):
-  parser.add_argument("--num-classes", type=int, metavar="N", required=True, help="number of classes")
+  parser.add_argument("--num-classes", type=int, metavar="N", help="number of classes")
   parser.add_argument("--batch-size", type=int, default=32, metavar="N", help="input batch size for training (default: 32)")
   parser.add_argument("--epochs", type=int, default=50, metavar="N", help="number of epochs to train (default: 50)")
   parser.add_argument("--lr", type=float, default=0.01, metavar="LR", help="learning rate (default: 1.0)")
@@ -119,4 +121,5 @@ def add_argument(parser:argparse.ArgumentParser):
   parser.add_argument("--train-ratio", type=float, default=0.8, metavar="R", help="ratio of training dataset size")
   parser.add_argument("--dataset-path", type=str, metavar="PATH", default='./local_dataset/dataset', help="dataset location")
   parser.add_argument("--valid-ratio", type=float, default=0.2, metavar="R", help="ratio of valid dataset size")
+  parser.add_argument("--log-interval", type=int, default=1, metavar="I", help="Print log every few times")
   parser.add_argument("--output-model-name", type=str, metavar="PATH", default="best.pth", help="Name of the output model")

@@ -53,3 +53,4 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   IMUGestureTrainer(**vars(args)).train()
+  # python train_imu_gesture.py --num-classes=5 --dataset-path=./local_dataset/touch_dataset

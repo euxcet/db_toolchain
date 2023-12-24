@@ -3,6 +3,8 @@ import torch.nn.functional as F
 from utils.logger import logger
 from typing import Any
 from abc import ABCMeta, abstractmethod
+import torch
+import torch.nn as nn
 from torchmetrics.classification import Accuracy
 from enum import Enum
 
@@ -30,6 +32,34 @@ class CrossEntropyLoss(Metric):
 
   def update(self, output, target):
     self.sum += F.cross_entropy(output, target, reduction="sum").item()
+    self.len += target.shape[0]
+
+  def compute(self):
+    self.value = 0 if self.len == 0 else self.sum / self.len
+
+  def reset(self):
+    self.value = 0
+    self.sum = 0
+    self.len = 0
+
+  def __lt__(self, other:CrossEntropyLoss):
+    return self.value < other.value
+
+  def __str__(self):
+    return f'{self.value:.4f}'
+
+class TrajectoryLoss(Metric):
+  def __init__(self):
+    super(TrajectoryLoss, self).__init__()
+    self.sum = 0
+    self.len = 0
+    self.cos_sim = nn.CosineSimilarity(dim=1, eps=1e-8)
+
+  def update(self, output, target):
+    length_loss = torch.mean(torch.abs((torch.norm(output, dim=1) - torch.norm(target, dim=1))))
+    angle_loss = 1 - torch.mean(self.cos_sim(output, target))
+    loss = length_loss + angle_loss * 2
+    self.sum += loss.item() * target.shape[0]
     self.len += target.shape[0]
 
   def compute(self):
