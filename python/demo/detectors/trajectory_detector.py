@@ -8,22 +8,23 @@ from demo.detector import Detector, DetectorEvent
 from sensor.basic_data import IMUData
 from sensor import Ring, RingEvent, RingEventType
 from sensor.glove import Glove, GloveEvent, GloveEventType
-from sensor.glove_data import GloveData, GloveIMUJointName
+from sensor.glove_data import GloveIMUJointName
 
 class TrajectoryDetector(Detector):
-  TIMESTAMP_STEP = 0.02
-  IMU_WINDOW_LEN = 20
-  MOVE_THRESHOLD = 0.1
-  def __init__(self, device:Ring|Glove=None, handler=None, arguments:dict=dict()):
-    super(TrajectoryDetector, self).__init__(
-      model=TrajectoryLSTMModel(), device=device,
-      handler=handler, arguments=arguments)
-    self.imu_window = Window[IMUData](self.IMU_WINDOW_LEN)
-    self.counter.execute_interval = self.arguments['execute_interval']
+  def __init__(self, name:str, device:str, devices:dict, gesture_detector_name:str, checkpoint_file:str,
+               imu_window_length:int, execute_interval:int, timestamp_step:float, move_threshold:float, handler=None):
+    super(TrajectoryDetector, self).__init__(name=name, model=TrajectoryLSTMModel(), device=devices[device],
+                                             checkpoint_file=checkpoint_file, handler=handler)
     self.touching = False
+    self.gesture_detector_name = gesture_detector_name
+    self.imu_window_length = imu_window_length
+    self.timestamp_step = timestamp_step
+    self.move_threshold = move_threshold
+    self.imu_window = Window[IMUData](imu_window_length)
     self.one_euro_filter = OneEuroFilter(np.zeros(2), 0)
     self.stable_window = Window(5)
     self.last_unstable_move = Window(20)
+    self.counter.execute_interval = execute_interval
 
   def touch_down(self):
     self.touching = True
@@ -38,20 +39,19 @@ class TrajectoryDetector(Detector):
   def detect(self, data):
     self.imu_window.push(data)
     if self.counter.count() and self.imu_window.full() and self.touching:
-      input_tensor = torch.tensor(self.imu_window.to_numpy_float().reshape(1, self.IMU_WINDOW_LEN, 6)).to(self.device)
+      input_tensor = torch.tensor(self.imu_window.to_numpy_float().reshape(1, self.imu_window_length, 6)).to(self.device)
       output = self.model(input_tensor).detach().cpu().numpy().flatten()
-
-      self.stable_window.push(np.linalg.norm(output) < self.MOVE_THRESHOLD)
+      self.stable_window.push(np.linalg.norm(output) < self.move_threshold)
       if self.stable_window.last():
         output = np.zeros_like(output)
       if self.stable_window.full() and self.stable_window.all():
         self.last_unstable_move.clear()
-      move = self.one_euro_filter(output, dt=self.TIMESTAMP_STEP)
+      move = self.one_euro_filter(output, dt=self.timestamp_step)
       self.last_unstable_move.push(move)
       self.broadcast_event(move)
 
   def handle_detector_event(self, event:DetectorEvent):
-    if event.detector == self.arguments['gesture_detector_name']:
+    if event.detector == self.gesture_detector_name:
       if event.data == 'touch_down':
         self.touch_down()
       elif event.data in ['touch_up', 'click', 'double_click']:

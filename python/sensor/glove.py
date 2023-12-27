@@ -37,7 +37,7 @@ class GloveVersion(Enum):
 
 class GloveConfig():
   # version: IMU_6AXIS IMU_9AXIS QUATERNION IMU_6AXIS_QUATERNION
-  def __init__(self, ip:str, port:int=11002, name:str="Glove UNNAMED", version:str="IMU_6AXIS", quiet_log=False):
+  def __init__(self, ip:str, port:int=11002, name:str="Glove UNNAMED", version:str="IMU_6AXIS", quiet_log=False, **kwargs):
     self.ip = ip
     self.port = port
     self.name = name

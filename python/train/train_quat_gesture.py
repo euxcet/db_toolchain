@@ -11,7 +11,7 @@ from model.quat_gesture_model import FullyConnectedModel
 from train.quat_gesture_dataset import get_quat_gesture_dataset
 
 from train.trainer import Trainer, add_argument
-from train.metric import MetricGroup, CrossEntropyLoss, AccuracyMetric
+from train.metric import MetricGroup, CrossEntropyLoss, AccuracyMetric, ConfusionMatrixMetric
 
 class QuatGestureTrainer(Trainer):
   def __init__(self, **kwargs):
@@ -37,11 +37,13 @@ class QuatGestureTrainer(Trainer):
     self.metric.add_metric('Train', 'Loss', CrossEntropyLoss())
     self.metric.add_metric('Valid', 'Accuracy', AccuracyMetric(self.fabric.device, task="multiclass", num_classes=self.num_classes))
     self.metric.add_metric('Valid', 'Loss', CrossEntropyLoss())
+    self.metric.add_metric('Valid', 'Confusion', ConfusionMatrixMetric(self.fabric.device, task="multiclass", num_classes=self.num_classes))
 
   def train_epoch(self, epoch:int):
     self._default_backward()
     self._default_valid()
     if self.update_best_metric(self.metric):
+      self.metric['Valid']['Confusion'].plot()
       self.save_model()
 
   def log_epoch(self, epoch:int):

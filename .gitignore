@@ -187,7 +187,8 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-*.zip
 nohup.out
 log.txt
-last_instruct.ins
+*.zip
+*.log
+*.ins

@@ -8,30 +8,36 @@ from demo.detector import Detector, DetectorEvent
 from sensor.basic_data import IMUData
 from sensor import Ring, RingEvent, RingEventType
 from sensor.glove import Glove, GloveEvent, GloveEventType
-from sensor.glove_data import GloveData, GloveIMUJointName
+from sensor.glove_data import GloveIMUJointName
 
 class GestureDetector(Detector):
-  def __init__(self, device:Ring|Glove=None, handler=None, arguments:dict=dict()):
+  def __init__(self, name:str, device:str, devices:dict, num_classes:int, imu_window_length:int, result_window_length:int,
+               execute_interval:int, checkpoint_file:str, labels:list[str], confidence_threshold:list[int],
+               trigger_wait_time:list[int], block:dict, handler=None):
     super(GestureDetector, self).__init__(
-      model=GestureNetCNN(num_classes=arguments['num_classes']), device=device,
-      handler=handler, arguments=arguments)
-    self.counter.print_interval = 1000
-    self.imu_window_length = self.arguments['imu_window_length']
+      name=name, model=GestureNetCNN(num_classes=num_classes),
+      device=devices[device], checkpoint_file=checkpoint_file, handler=handler)
+    self.imu_window_length = imu_window_length
+    self.num_classes = num_classes
+    self.labels = labels
+    self.confidence_threshold = confidence_threshold
+    self.trigger_wait_time = trigger_wait_time
     self.imu_window = Window[IMUData](self.imu_window_length)
-    self.result_window = Window(self.arguments['result_window_length'])
-    self.counter.execute_interval = self.arguments['execute_interval']
-    self.last_gesture_time = [0] * arguments['num_classes']
-    self.trigger_time = [0] * arguments['num_classes']
-    self.block_until_time = [0] * arguments['num_classes']
-    self.threshold = self.arguments['confidence_threshold']
+    self.result_window = Window(result_window_length)
+    self.last_gesture_time = [0] * num_classes
+    self.trigger_time = [0] * num_classes
+    self.block_until_time = [0] * num_classes
+    self.block = block
+    self.counter.print_interval = 1000
+    self.counter.execute_interval = execute_interval
 
   def trigger(self, gesture_id:int, current_time:float):
-    label:list[str] = self.arguments['label']
+    label:list[str] = self.labels
     # trigger priority
     if gesture_id is not None:
       if current_time > self.block_until_time[gesture_id]:
         self.trigger_time[gesture_id] = current_time
-      block = self.arguments['block'].get(label[gesture_id])
+      block = self.block.get(label[gesture_id])
       if block is not None:
         block_gestures, block_times = block['gesture'], block['time']
         for block_gesture, block_time in zip(block_gestures, block_times):
@@ -40,9 +46,9 @@ class GestureDetector(Detector):
           self.trigger_time[block_gesture_id] = 0
 
     # delayed trigger
-    for i in range(self.arguments['num_classes']):
+    for i in range(self.num_classes):
       if self.trigger_time[i] > 0 and \
-        current_time >= self.trigger_time[i] + self.arguments['trigger_wait_time'][i]:
+        current_time >= self.trigger_time[i] + self.trigger_wait_time[i]:
         self.trigger_time[i] = 0
         self.broadcast_event(label[i])
     
@@ -55,7 +61,7 @@ class GestureDetector(Detector):
       output_tensor = F.softmax(self.model(input_tensor).detach().cpu(), dim=1)
       gesture_id = torch.max(output_tensor, dim=1)[1].item()
       confidence = output_tensor[0][gesture_id].item()
-      if gesture_id < len(self.threshold) and confidence > self.threshold[gesture_id]:
+      if gesture_id < len(self.confidence_threshold) and confidence > self.confidence_threshold[gesture_id]:
         self.result_window.push(gesture_id)
         if current_time > self.last_gesture_time[gesture_id] + 0.8 and self.result_window.full() and \
            self.result_window.all(lambda x: x == gesture_id):

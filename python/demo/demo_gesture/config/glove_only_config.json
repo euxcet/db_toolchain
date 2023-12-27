@@ -1,36 +1,48 @@
 {
-  "glove_gesture_detector": {
-    "name": "GestureDetector",
-    "num_classes": 28,
-    "imu_window_length": 200,
-    "result_window_length": 4,
-    "checkpoint_file": "checkpoint/glove_imu_xj_verion_1020.pth",
-    "execute_interval": 10,
-    "label": ["", "g_front", "", "g_right", "g_two", "g_start", "g_stop", "g_prepare", "", "", "", "", "", "", "g_one", "g_gather", "g_enemy"],
-    "confidence_threshold": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
-    "trigger_wait_time": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    "block": { }
-  },
-  "gesture_aggregator": {
-    "name": "GestureAggregator",
-    "detectors_name": ["RingGestureDetector", "GloveGestureDetector"],
-    "gestures": [
-      { "name": "bomb", "events": ["r_bomb"] },
-      { "name": "close", "events": ["r_close"] },
-      { "name": "cover", "events": ["r_cover"] },
-      { "name": "enemy", "events": ["r_enemy"] },
-      { "name": "gather", "events": ["r_gather"] },
-      { "name": "quick", "events": ["r_quick", "g_quick"] },
-      { "name": "forward", "events": ["r_forward"] },
-      { "name": "repeat", "events": ["r_repeat"] },
-      { "name": "hostage", "events": ["r_move", "g_hostage"] },
-      { "name": "prepare", "events": ["r_move", "g_prepare"] },
-      { "name": "ok", "events": ["r_move", "g_ok"] },
-      { "name": "safe", "events": ["r_move", "g_safe"] },
-      { "name": "danger", "events": ["r_move", "g_danger"] },
-      { "name": "search", "events": ["r_move", "g_search"] },
-      { "name": "sniper", "events": ["r_move", "g_sniper"] },
-      { "name": "stop", "events": ["r_move", "g_stop"] }
-    ]
-  }
+  "devices": [
+    {
+      "type": "glove",
+      "name": "Glove",
+      "ip": "169.254.6.2"
+    }
+  ],
+  "detectors": [
+    {
+      "type": "GestureDetector",
+      "name": "GloveGestureDetector",
+      "device": "Glove",
+      "num_classes": 28,
+      "imu_window_length": 200,
+      "result_window_length": 4,
+      "checkpoint_file": "checkpoint/glove_imu_xj_verion_1020.pth",
+      "execute_interval": 10,
+      "labels": ["", "g_front", "", "g_right", "g_two", "g_start", "g_stop", "g_prepare", "", "", "", "", "", "", "g_one", "g_gather", "g_enemy"],
+      "confidence_threshold": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
+      "trigger_wait_time": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "block": { }
+    },
+    {
+      "type": "GestureAggregator",
+      "name": "GestureAggregator",
+      "detectors_name": ["RingGestureDetector", "GloveGestureDetector"],
+      "gestures": [
+        { "name": "bomb", "events": ["r_bomb"] },
+        { "name": "close", "events": ["r_close"] },
+        { "name": "cover", "events": ["r_cover"] },
+        { "name": "enemy", "events": ["r_enemy"] },
+        { "name": "gather", "events": ["r_gather"] },
+        { "name": "quick", "events": ["r_quick", "g_quick"] },
+        { "name": "forward", "events": ["r_forward"] },
+        { "name": "repeat", "events": ["r_repeat"] },
+        { "name": "hostage", "events": ["r_move", "g_hostage"] },
+        { "name": "prepare", "events": ["r_move", "g_prepare"] },
+        { "name": "ok", "events": ["r_move", "g_ok"] },
+        { "name": "safe", "events": ["r_move", "g_safe"] },
+        { "name": "danger", "events": ["r_move", "g_danger"] },
+        { "name": "search", "events": ["r_move", "g_search"] },
+        { "name": "sniper", "events": ["r_move", "g_sniper"] },
+        { "name": "stop", "events": ["r_move", "g_stop"] }
+      ]
+    }
+  ]
 }

@@ -32,7 +32,7 @@ class RingEvent():
 
 class RingConfig():
   def __init__(self, address:str, name:str="Ring Unnamed", adapter:str=None, imu_freq=200,
-               enable_imu=True, enable_touch=True, quiet_log=False):
+               enable_imu=True, enable_touch=True, quiet_log=False, **kwargs):
     self.address = address
     self.name = name
     self.adapter = adapter

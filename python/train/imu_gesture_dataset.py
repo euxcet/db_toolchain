@@ -48,10 +48,11 @@ def load_timestamp_data(filename:str):
     return [list(map(float, x.strip().split(' '))) for x in lines]
 
 def map_class(class_:int, class_map:dict):
-  return class_ if class_map is None else class_map[class_]
+  return class_ if class_map is None or class_ not in class_map else class_map[class_]
 
 def get_imu_gesture_dataset(roots:list[str], class_map=None):
   data, labels = [], []
+  class_map = {1: 0, 2: 0, 3: 1, 4: 2, 5: 3, 6:4, 7:5, 8:6, 9:7, 10:8, 11:9, 12:10, 13:11, 14:12, 15:13, 16:14, 17:15, 18:16}
   for root in roots:
     file_dataset = FileDataset(root)
     for user, class_, number, _ in file_dataset.records:

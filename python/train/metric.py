@@ -5,7 +5,7 @@ from typing import Any
 from abc import ABCMeta, abstractmethod
 import torch
 import torch.nn as nn
-from torchmetrics.classification import Accuracy
+from torchmetrics.classification import Accuracy, ConfusionMatrix
 from enum import Enum
 
 class Metric(metaclass=ABCMeta):
@@ -96,6 +96,30 @@ class AccuracyMetric(Metric):
 
   def __str__(self):
     return f'{100 * self.value:.2f}%'
+
+class ConfusionMatrixMetric(Metric):
+  def __init__(self, device, **kwargs):
+    super(ConfusionMatrixMetric, self).__init__()
+    self.metric = ConfusionMatrix(**kwargs).to(device)
+
+  def update(self, output, target):
+    self.metric.update(output, target)
+
+  def compute(self):
+    self.value = self.metric.compute()
+
+  def reset(self):
+    self.metric.reset()
+
+  def plot(self):
+    fig, ax = self.metric.plot()
+    # fig.savefig('output.png')
+  
+  def __lt__(self, other:ConfusionMatrixMetric):
+    raise NotImplementedError()
+
+  def __str__(self):
+    return "Not Displayed"
 
 class MetricGroup():
   def __init__(self, lt_func):
