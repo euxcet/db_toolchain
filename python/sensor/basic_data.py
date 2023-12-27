@@ -15,11 +15,15 @@ class QuaternionData():
     self.z = z
     self.timestamp = timestamp
 
-  @dispatch
+  @dispatch(tuple, float)
   def __init__(self, data:tuple, timestamp:float):
     if len(data) == 4:
       self.__init__(*data, timestamp)
-    raise NotImplementedError
+    else:
+      raise NotImplementedError
+  
+  def to_numpy(self):
+    return np.array([self.w, self.x, self.y, self.z])
 
 class IMUData():
   @dispatch(float, float, float, float, float, float, float)

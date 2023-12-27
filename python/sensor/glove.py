@@ -15,7 +15,7 @@ class GloveEventType(Enum):
   pose = 0
 
 class GloveEvent():
-  def __init__(self, event_type:GloveEventType, data, timestamp:float, address:tuple[str, int]):
+  def __init__(self, event_type:GloveEventType, data:GloveData, timestamp:float, address:tuple[str, int]):
     self.event_type = event_type
     self.data = data
     self.timestamp = timestamp
@@ -96,7 +96,6 @@ class Glove():
     while True:
       data = self.socket.recv(581 if self.config.version == GloveVersion.imu_6axis_quaternion else 1024)
       self.parse_data(data)
-
 
 class GlovePool():
   def __init__(self, keep_alive=True):

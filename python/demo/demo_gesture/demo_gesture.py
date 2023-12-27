@@ -27,3 +27,5 @@ if __name__ == '__main__':
   }
   while True:
     time.sleep(1)
+
+# "labels": ["negative", "g_hostage", "g_gather", "g_quick", "g_stop", "g_search", "g_ok", "g_safe", "g_danger", "g_prepare", "g_sniper", "thumbright", "thumbleft", "handforwardhorizontal", "handforwardvertical", "pinkyout", "aim", "fingergatherup", "fingergatherdown", "indexout", "indexdown", "palmout", "palmin", "rest", "fingergatherright"],

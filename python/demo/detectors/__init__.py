@@ -1,3 +1,4 @@
-from .gesture_detector import GestureDetector
+from .dynamic_gesture_detector import DynamicGestureDetector
+from .static_gesture_detector import StaticGestureDetector
 from .imu_stable_detector import IMUStableDetector
 from .trajectory_detector import TrajectoryDetector

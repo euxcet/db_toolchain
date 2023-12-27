@@ -13,7 +13,7 @@ class GestureAggregator(Detector):
     if event.detector in self.detectors_name:
       for gesture in self.gestures:
         if gesture.update(event.data):
-          logger.info(f'Trigger [{event.data}]')
+          logger.info(f'Trigger [{gesture.name}]')
 
   class Gesture():
     def __init__(self, name, events:list[str], window_time:float=1.0, min_trigger_interval:float=1.0, keep_order=False):

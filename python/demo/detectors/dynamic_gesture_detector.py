@@ -10,11 +10,11 @@ from sensor import Ring, RingEvent, RingEventType
 from sensor.glove import Glove, GloveEvent, GloveEventType
 from sensor.glove_data import GloveIMUJointName
 
-class GestureDetector(Detector):
+class DynamicGestureDetector(Detector):
   def __init__(self, name:str, device:str, devices:dict, num_classes:int, imu_window_length:int, result_window_length:int,
-               execute_interval:int, checkpoint_file:str, labels:list[str], confidence_threshold:list[int],
-               trigger_wait_time:list[int], block:dict, handler=None):
-    super(GestureDetector, self).__init__(
+               execute_interval:int, checkpoint_file:str, labels:list[str], confidence_threshold:list[float],
+               trigger_wait_time:list[float], min_trigger_interval: list[float], block:dict, handler=None):
+    super(DynamicGestureDetector, self).__init__(
       name=name, model=GestureNetCNN(num_classes=num_classes),
       device=devices[device], checkpoint_file=checkpoint_file, handler=handler)
     self.imu_window_length = imu_window_length
@@ -22,6 +22,7 @@ class GestureDetector(Detector):
     self.labels = labels
     self.confidence_threshold = confidence_threshold
     self.trigger_wait_time = trigger_wait_time
+    self.min_trigger_interval = min_trigger_interval
     self.imu_window = Window[IMUData](self.imu_window_length)
     self.result_window = Window(result_window_length)
     self.last_gesture_time = [0] * num_classes
@@ -63,8 +64,8 @@ class GestureDetector(Detector):
       confidence = output_tensor[0][gesture_id].item()
       if gesture_id < len(self.confidence_threshold) and confidence > self.confidence_threshold[gesture_id]:
         self.result_window.push(gesture_id)
-        if current_time > self.last_gesture_time[gesture_id] + 0.8 and self.result_window.full() and \
-           self.result_window.all(lambda x: x == gesture_id):
+        if current_time > self.last_gesture_time[gesture_id] + self.min_trigger_interval[gesture_id] and \
+          self.result_window.full() and self.result_window.all(lambda x: x == gesture_id):
            self.trigger(gesture_id, current_time)
            self.last_gesture_time[gesture_id] = current_time
       else:

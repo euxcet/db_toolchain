@@ -1,7 +1,6 @@
+import numpy as np
 from enum import Enum
-from pyquaternion import Quaternion
-from .basic_data import IMUData
-# from .imu_data import IMUData
+from .basic_data import IMUData, QuaternionData
 
 class GloveQuaternionJointName(Enum):
   WRIST_JOINT = 0
@@ -36,21 +35,28 @@ class GloveIMUJointName(Enum):
 
 class GloveData():
   # TODO: use a class to store basic information.
-  def __init__(self, basic:dict, imu_data: list[IMUData]=None, quaternion_data: list[Quaternion]=None, timestamp:float=0):
+  def __init__(self, basic:dict, imu_data:list[IMUData]=None, quaternion_data:list[QuaternionData]=None, timestamp:float=0):
     self.basic = basic
-    self.imu_data = imu_data
-    self.quaternion_data = quaternion_data
+    self.imu_data:list[IMUData] = imu_data
+    self.quaternion_data:list[QuaternionData] = quaternion_data
     self.timestamp = timestamp
 
   # TODO: handle exception
-  def get_imu_data(self, joint_name: GloveIMUJointName) -> IMUData:
+  def get_imu_data(self, joint_name:GloveIMUJointName) -> IMUData:
     return self.imu_data[joint_name.value]
 
-  def set_imu_data(self, joint_name: GloveIMUJointName, data: IMUData) -> IMUData:
+  def set_imu_data(self, joint_name:GloveIMUJointName, data:IMUData) -> IMUData:
     self.imu_data[joint_name.value] = data
 
-  def get_quaternion_data(self, joint_name: GloveQuaternionJointName) -> Quaternion:
+  def get_quaternion_data_numpy(self, joint_name:GloveQuaternionJointName=None) -> np.ndarray:
+    if joint_name is None:
+      return np.concatenate(list(map(lambda x:x.to_numpy(), self.quaternion_data)))
+    return self.quaternion_data[joint_name.value].to_numpy()
+
+  def get_quaternion_data(self, joint_name:GloveQuaternionJointName=None) -> list[QuaternionData]|QuaternionData:
+    if joint_name is None:
+      return self.quaternion_data
     return self.quaternion_data[joint_name.value]
 
-  def set_quaternion_data(self, joint_name: GloveQuaternionJointName, data: Quaternion) -> Quaternion:
+  def set_quaternion_data(self, joint_name:GloveQuaternionJointName, data:QuaternionData) -> QuaternionData:
     self.quaternion_data[joint_name.value] = data
