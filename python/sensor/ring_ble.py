@@ -14,7 +14,8 @@ from utils.crc import crc16
 class RingLifeCircleEvent(Enum):
   on_connecting = 0
   on_connected = 1
-  on_disconnected = 2
+  on_initialized = 2
+  on_disconnected = 3
 
 class RingEventType(Enum):
   lifecircle = 0
@@ -88,6 +89,9 @@ class RingBLE:
 
   def on_connected(self):
     self.trigger_event(RingEventType.lifecircle, RingLifeCircleEvent.on_connected)
+
+  def on_initialized(self):
+    self.trigger_event(RingEventType.lifecircle, RingLifeCircleEvent.on_initialized)
 
   def on_disconnect(self, clients):
     self.disconnected = True
@@ -256,10 +260,12 @@ class RingBLE:
     # touch
     await self.send('TPOPS=' + '1,1,1' if self.config.enable_touch else '0,0,0')
     # imu
-    if self.config.enable_imu != None:
+    if self.config.enable_imu:
       await self.send('IMUARG=0,0,0,' + str(self.config.imu_freq))
       await self.send('ENDB6AX')
     self.set_color('B')
+    await asyncio.sleep(0.5)
+    self.on_initialized()
 
     last_heartbeat_time = 0
     while True:
@@ -272,6 +278,7 @@ class RingBLE:
           self.event_callback(RingEvent(RingEventType.heartbeat, None, current_time, self.config.address))
       while not self.action_queue.empty():
         data = self.action_queue.get()
+        logger.info(f'Perform action {data}')
         if data == 'disconnect':
           await self.client.disconnect()
         if data == 'battery':

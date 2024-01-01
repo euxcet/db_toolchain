@@ -3,6 +3,10 @@ import numpy as np
 from demo.detector import Detector, DetectorEvent
 from utils.logger import logger
 
+from threading import Thread
+import playsound
+
+
 class GestureAggregator(Detector):
   def __init__(self, name:str, detectors_name:list[str], gestures:list, devices:list=None, handler=None):
     super(GestureAggregator, self).__init__(name=name, handler=handler)
@@ -25,6 +29,9 @@ class GestureAggregator(Detector):
       self.keep_order = keep_order
       self.last_trigger_time = 0
 
+    def play(self):
+      playsound.playsound('sound/' + self.name + '.mp3')
+
     def update(self, event:str) -> bool:
       if event not in self.events:
         return False
@@ -34,5 +41,6 @@ class GestureAggregator(Detector):
          and (not self.keep_order or np.all(self.events_timestamp[:-1] <= self.events_timestamp[1:])) \
          and current_time > self.last_trigger_time + self.min_trigger_interval:
          self.last_trigger_time = current_time
+         Thread(target=self.play).start()
          return True
       return False

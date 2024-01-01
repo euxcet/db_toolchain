@@ -3,12 +3,12 @@
     {
       "type": "ring",
       "name": "Ring",
-      "address" : "0D85597D-C82C-E839-E0E0-4776246A6398"
+      "address" : "1A3A78AB-1FBD-288E-ED96-7CEC1BB6CBDA"
     }
   ],
   "detectors": [
     {
-      "type": "GestureDetector",
+      "type": "DynamicGestureDetector",
       "name": "GestureDetector",
       "device": "Ring",
       "num_classes": 5,
@@ -19,6 +19,7 @@
       "labels": ["touch_down", "touch_up", "move", "click", "double_click"],
       "confidence_threshold": [0.7, 0.9, 0.9, 0.9, 0.9],
       "trigger_wait_time": [0, 0, 0, 0.3, 0],
+      "min_trigger_interval": [0.8, 0.8, 0.8, 0.8, 0.8],
       "block": {
         "click": {
           "gesture": ["touch_down"],
@@ -45,7 +46,7 @@
       "type": "MouseRing",
       "name": "MouseRing",
       "control_cursor": true,
-      "cursor_scale": 10,
+      "cursor_scale": 15,
       "cursor_initial_x": 330,
       "cursor_initial_y": 396,
       "trajectory_detector_name": "TrajectoryDetector",

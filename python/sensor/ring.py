@@ -1,10 +1,11 @@
+import time
 import queue
 import asyncio
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 from utils.logger import logger
 from utils.counter import Counter
-from .ring_ble import RingBLE, RingEvent, RingConfig
+from .ring_ble import RingBLE, RingEvent, RingConfig, RingEventType, RingLifeCircleEvent
 
 class Ring():
   def __init__(self, config:RingConfig, event_queue:queue.Queue):
@@ -12,13 +13,15 @@ class Ring():
     self.address = config.address
     self.event_queue = event_queue
     self.ring = RingBLE(config, event_callback=self.event_callback)
-    self.disconnected = False
+    self.status = RingLifeCircleEvent.on_connecting
     self.imu_data_queue = queue.Queue()
     self.counter = Counter(print_interval=400)
 
   def event_callback(self, event:RingEvent):
     self.counter.count(enable_print=False)
     self.event_queue.put_nowait(event)
+    if event.event_type == RingEventType.lifecircle:
+      self.status = event.data
 
   def blink(self, blink_color, blink_time):
     # TODO: use asyncio
@@ -52,7 +55,7 @@ class RingPool():
   def keep_alive_strategy(self):
     pass
 
-  def add_ring(self, config:RingConfig) -> Ring:
+  def add_ring(self, config:RingConfig, wait_until_initialized:bool=False) -> Ring:
     if config.address in self.rings:
       logger.warning(f'Ring[{config.address}] is already added.')
       return
@@ -60,6 +63,9 @@ class RingPool():
     self.rings[config.address] = ring
     self.handlers[config.address] = set()
     self.executor.submit(ring.run)
+    if wait_until_initialized:
+      while ring.status != RingLifeCircleEvent.on_initialized:
+        time.sleep(0.3)
     return ring
 
   def get_ring(self, config:RingConfig, connect_when_miss:bool=None) -> Ring:

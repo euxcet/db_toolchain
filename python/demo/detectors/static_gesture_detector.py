@@ -38,7 +38,6 @@ class StaticGestureDetector(Detector):
       output_tensor = F.softmax(self.model(input_tensor).detach().cpu(), dim=1)
       gesture_id = torch.max(output_tensor, dim=1)[1].item()
       confidence = output_tensor[0][gesture_id].item()
-      print(self.labels[gesture_id], confidence)
       if gesture_id < len(self.confidence_threshold) and confidence > self.confidence_threshold[gesture_id]:
         self.result_window.push(gesture_id)
         if current_time > self.last_gesture_time[gesture_id] + self.min_trigger_interval[gesture_id] and \

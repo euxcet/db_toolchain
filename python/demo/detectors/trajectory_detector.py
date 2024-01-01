@@ -23,7 +23,7 @@ class TrajectoryDetector(Detector):
     self.imu_window = Window[IMUData](imu_window_length)
     self.one_euro_filter = OneEuroFilter(np.zeros(2), 0)
     self.stable_window = Window(5)
-    self.last_unstable_move = Window(20)
+    self.last_unstable_move = Window(30)
     self.counter.execute_interval = execute_interval
 
   def touch_down(self):
