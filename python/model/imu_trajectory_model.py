@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+# TODO: upgrade model
+
 class TrajectoryLSTMModel(nn.Module):
   def __init__(self, input_size=6, hidden_size=32, output_size=2, time_steps=20):
     super(TrajectoryLSTMModel, self).__init__()

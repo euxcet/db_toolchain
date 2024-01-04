@@ -5,10 +5,7 @@ import torch.nn.functional as F
 from utils.window import Window
 from model.quat_gesture_model import FullyConnectedModel
 from demo.detector import Detector, DetectorEvent
-from sensor.basic_data import IMUData
-from sensor import Ring, RingEvent, RingEventType
-from sensor.glove import Glove, GloveEvent, GloveEventType
-from sensor.glove_data import GloveIMUJointName
+from sensor.glove import GloveEvent, GloveEventType
 # from demo.detectors.visualizer import Visualizer
 
 class StaticGestureDetector(Detector):

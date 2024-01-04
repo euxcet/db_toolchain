@@ -12,7 +12,6 @@ from enum import Enum
 
 VALID_SEQUENCE = [ 0, 1, 2, 3, 6, 7, 8, 11, 12, 13, 16, 17, 18, 21, 22, 23, ]
 
-
 class Hand_Type(Enum):
     BOTH_HAND = 0
     HAND_LEFT = 1
@@ -73,6 +72,7 @@ def singnal_glove_all_data_consumption(
         # 绘制手势
         return (hand_type, global_posi)
 
+# self.GESTURE_SINGNAL.emit(pb_data)
 
 class Visualizer(QObject):
   TEXT_SIGNAL = pyqtSignal(object)
@@ -82,29 +82,26 @@ class Visualizer(QObject):
     super().__init__()
     self.name = "gesture visualzer"
     self.gesture_vis_widget = gesture_vis_widget
-    self._init_canvas()
+    self.init_canvas()
     self.GESTURE_SINGNAL.connect(self._on_gesture_data)
     self.TEXT_SINGNAL.connect(self._on_intention_data)
 
-  def _init_canvas(self):
+  def init_canvas(self):
     self.canvas = scene.SceneCanvas(keys="interactive", bgcolor="transparent")
-    hex_color = "#141c26"
-    rgba_color = Color(hex_color).rgba
-    self.canvas.bgcolor = rgba_color
+    self.canvas.bgcolor = Color("#141c26").rgba
     self.gesture_vis_widget.setAttribute(Qt.WA_TranslucentBackground, True)
-    self._init_view()
+    self.init_view()
     layout = QVBoxLayout(self.gesture_vis_widget)
     layout.addWidget(self.canvas.native)
 
-  def _init_view(self):
+  def init_view(self):
     self.view = self.canvas.central_widget.add_view()
     self.view.camera = scene.cameras.ArcballCamera(fov=0)
-    self.view.camera.scale_factor = 50  # 相机缩放
+    self.view.camera.scale_factor = 50
 
-    self.__hand_keys = np.random.normal(size=(26, 3), loc=0, scale=1)
-    # Create and show visual
+    self.hand_keys = np.random.normal(size=(26, 3), loc=0, scale=1)
     self.markers = scene.visuals.Markers(
-      pos=self.__hand_keys,
+      pos=self.hand_keys,
       antialias=False,
       face_color="red",
       edge_color="white",
@@ -112,12 +109,11 @@ class Visualizer(QObject):
       scaling=True,
     )
     self.markers.parent = self.view.scene
-    # 画线
-    line_pos = np.array([self.__hand_keys[i] for i in indices])
+    line_pos = np.array([self.hand_keys[i] for i in indices])
     self.__line = Line(pos=line_pos, connect="segments", width=5, antialias=True)
     self.__line.parent = self.view.scene
 
-  def _on_gesture_data(self, pb_data):
+  def on_gesture_data(self, pb_data):
     hand_type = pb_data[0]
     gesture_data = pb_data[1]
     if gesture_data is not None:

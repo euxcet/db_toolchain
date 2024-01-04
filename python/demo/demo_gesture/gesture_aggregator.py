@@ -6,9 +6,8 @@ from utils.logger import logger
 from threading import Thread
 import playsound
 
-
 class GestureAggregator(Detector):
-  def __init__(self, name:str, detectors_name:list[str], gestures:list, devices:list=None, handler=None):
+  def __init__(self, name:str, detectors_name:list[str], gestures:list, devices=None, handler=None):
     super(GestureAggregator, self).__init__(name=name, handler=handler)
     self.detectors_name = detectors_name
     self.gestures = [self.Gesture(**gesture_config) for gesture_config in gestures]

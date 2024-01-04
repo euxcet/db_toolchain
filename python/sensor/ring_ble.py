@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import time
-import asyncio
-import struct
-from bleak import BleakScanner, BleakClient
-from .basic_data import IMUData
 import queue
+import struct
+import asyncio
 from enum import Enum
-from utils.file_utils import load_json
-from utils.logger import logger
+from bleak import BleakScanner, BleakClient
+from sensor.data.basic_data import IMUData
 from utils.crc import crc16
+from utils.logger import logger
+from utils.file_utils import load_json
 
 class RingLifeCircleEvent(Enum):
   on_connecting = 0

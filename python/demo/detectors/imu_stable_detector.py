@@ -1,10 +1,10 @@
 import numpy as np
 from utils.window import Window
 from demo.detector import Detector, DetectorEvent
-from sensor.basic_data import IMUData
-from sensor import Ring, RingEvent, RingEventType
-from sensor.glove import Glove, GloveEvent, GloveEventType
-from sensor.glove_data import GloveIMUJointName
+from python.sensor.data.basic_data import IMUData
+from sensor import RingEvent, RingEventType
+from sensor.glove import GloveEvent, GloveEventType
+from python.sensor.data.glove_data import GloveIMUJointName
 
 class IMUStableDetector(Detector):
   def __init__(self, name:str, device:str, devices:dict, imu_window_length:int,

@@ -5,7 +5,7 @@ from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 from utils.logger import logger
 from utils.counter import Counter
-from .ring_ble import RingBLE, RingEvent, RingConfig, RingEventType, RingLifeCircleEvent
+from sensor.ring_ble import RingBLE, RingEvent, RingConfig, RingEventType, RingLifeCircleEvent
 
 class Ring():
   def __init__(self, config:RingConfig, event_queue:queue.Queue):

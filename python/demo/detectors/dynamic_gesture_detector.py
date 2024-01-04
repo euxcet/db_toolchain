@@ -1,14 +1,13 @@
 import time
 import torch
-import numpy as np
 import torch.nn.functional as F
 from utils.window import Window
 from model.imu_gesture_model import GestureNetCNN
 from demo.detector import Detector, DetectorEvent
-from sensor.basic_data import IMUData
-from sensor import Ring, RingEvent, RingEventType
-from sensor.glove import Glove, GloveEvent, GloveEventType
-from sensor.glove_data import GloveIMUJointName
+from python.sensor.data.basic_data import IMUData
+from sensor import RingEvent, RingEventType
+from sensor.glove import GloveEvent, GloveEventType
+from python.sensor.data.glove_data import GloveIMUJointName
 
 class DynamicGestureDetector(Detector):
   def __init__(self, name:str, device:str, devices:dict, num_classes:int, imu_window_length:int, result_window_length:int,

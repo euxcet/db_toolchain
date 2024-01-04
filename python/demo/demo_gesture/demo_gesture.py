@@ -6,7 +6,7 @@ import argparse
 from utils.file_utils import load_json
 from sensor import add_device
 from demo.detectors import *
-from demo.demo_gesture.gesture_aggregator import GestureAggregator
+from demo.demo_gesture.gesture_aggregator import GestureAggregator # DO NOT REMOVE THIS LINE
 from demo.detector import detector_register
 
 if __name__ == '__main__':

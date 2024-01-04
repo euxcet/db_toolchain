@@ -1,14 +1,13 @@
-import os
 import torch
 import numpy as np
 from utils.window import Window
 from utils.filter import OneEuroFilter
 from model.imu_trajectory_model import TrajectoryLSTMModel
 from demo.detector import Detector, DetectorEvent
-from sensor.basic_data import IMUData
-from sensor import Ring, RingEvent, RingEventType
-from sensor.glove import Glove, GloveEvent, GloveEventType
-from sensor.glove_data import GloveIMUJointName
+from python.sensor.data.basic_data import IMUData
+from sensor import RingEvent, RingEventType
+from sensor.glove import GloveEvent, GloveEventType
+from python.sensor.data.glove_data import GloveIMUJointName
 
 class TrajectoryDetector(Detector):
   def __init__(self, name:str, device:str, devices:dict, gesture_detector_name:str, checkpoint_file:str,
