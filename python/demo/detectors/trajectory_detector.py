@@ -4,10 +4,8 @@ from utils.window import Window
 from utils.filter import OneEuroFilter
 from model.imu_trajectory_model import TrajectoryLSTMModel
 from demo.detector import Detector, DetectorEvent
-from python.sensor.data.basic_data import IMUData
-from sensor import RingEvent, RingEventType
-from sensor.glove import GloveEvent, GloveEventType
-from python.sensor.data.glove_data import GloveIMUJointName
+from sensor.data import IMUData
+from sensor import RingEvent, RingEventType, GloveEvent, GloveEventType, GloveIMUJointName
 
 class TrajectoryDetector(Detector):
   def __init__(self, name:str, device:str, devices:dict, gesture_detector_name:str, checkpoint_file:str,

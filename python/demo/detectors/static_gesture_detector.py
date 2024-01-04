@@ -4,8 +4,8 @@ import numpy as np
 import torch.nn.functional as F
 from utils.window import Window
 from model.quat_gesture_model import FullyConnectedModel
+from sensor import RingEvent, GloveEvent, GloveEventType
 from demo.detector import Detector, DetectorEvent
-from sensor.glove import GloveEvent, GloveEventType
 # from demo.detectors.visualizer import Visualizer
 
 class StaticGestureDetector(Detector):
