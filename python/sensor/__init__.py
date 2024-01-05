@@ -1,5 +1,6 @@
-from .ring import Ring, ring_pool
-from .ring_ble import RingConfig, RingEvent, RingEventType, RingLifeCircleEvent
+from .device import Device, DeviceLifeCircleEvent
+from .ring import Ring, RingConfig, RingEvent, RingEventType, RingAction
+from .ring_pool import ring_pool
 from .glove import Glove, GloveConfig, GloveEvent, GloveEventType, glove_pool
 from .data.glove_data import GloveIMUJointName, GloveQuaternionJointName
 

@@ -21,7 +21,7 @@ class DetectorEventBroadcaster():
   def remove_detector(self, detector:str):
     self.detectors.append(detector)
 
-  def broadcast_event(self, event):
+  def broadcast_event(self,event):
     for d in self.detectors:
       d.handle_detector_event(event)
 
