@@ -4,17 +4,16 @@ import numpy as np
 import torch.nn.functional as F
 from utils.window import Window
 from model.quat_gesture_model import FullyConnectedModel
-from sensor import RingEvent, GloveEvent, GloveEventType
-from demo.detector import Detector, DetectorEvent
+from demo.detector import Detector
 # from demo.detectors.visualizer import Visualizer
 
 class StaticGestureDetector(Detector):
-  def __init__(self, name:str, device:str, devices:dict, num_classes:int, execute_interval:int, result_window_length:int,
-               checkpoint_file:str, labels:list[str], confidence_threshold:list[float],
-               min_trigger_interval: list[float], handler=None):
+  def __init__(self, name:str, input_streams:dict[str, str], output_streams:dict[str, str], num_classes:int,
+               execute_interval:int, result_window_length:int, checkpoint_file:str, labels:list[str],
+               confidence_threshold:list[float], min_trigger_interval: list[float]):
     super(StaticGestureDetector, self).__init__(
-      name=name, model=FullyConnectedModel(num_classes=num_classes),
-      device=devices[device], checkpoint_file=checkpoint_file, handler=handler)
+      name=name, input_streams=input_streams, output_streams=output_streams,
+      model=FullyConnectedModel(num_classes=num_classes), checkpoint_file=checkpoint_file)
     self.num_classes = num_classes
     self.labels = labels
     self.confidence_threshold = confidence_threshold
@@ -28,7 +27,7 @@ class StaticGestureDetector(Detector):
     # self.visualizer = Visualizer()
     # self.visualizer.start()
     
-  def detect(self, data:np.ndarray):
+  def handle_input_stream_skeleton(self, data:np.ndarray, timestamp:float) -> None:
     if self.counter.count(enable_print=False, print_fps=True):
       current_time = time.time()
       input_tensor = torch.tensor(data.astype(np.float32)).reshape(1, 64).to(self.device)
@@ -40,16 +39,6 @@ class StaticGestureDetector(Detector):
         if current_time > self.last_gesture_time[gesture_id] + self.min_trigger_interval[gesture_id] and \
           self.result_window.full() and self.result_window.all(lambda x: x == gesture_id):
           self.last_gesture_time[gesture_id] = current_time
-          self.broadcast_event(self.labels[gesture_id])
+          self.output(self.OUTPUT_STREAM_RESULT, self.labels[gesture_id])
       else:
         self.result_window.push(-1)
-
-  def handle_detector_event(self, event:DetectorEvent):
-    pass
-
-  def handle_ring_event(self, device, event:RingEvent):
-    pass
-
-  def handle_glove_event(self, device, event:GloveEvent):
-    if event.event_type == GloveEventType.pose:
-      self.detect(event.data.get_quaternion_data_numpy())

@@ -1,12 +1,10 @@
 import numpy as np
-from demo.detector import Detector, DetectorEvent
+from demo.detector import Detector
 
 class MouseRing(Detector):
-  def __init__(self, name:str, trajectory_detector_name:str, gesture_detector_name:str, cursor_scale:float,
-               cursor_initial_x:int, cursor_initial_y:int, control_cursor:bool=False, devices:list=None, handler=None):
-    super(MouseRing, self).__init__(name=name, handler=handler)
-    self.trajectory_detector_name = trajectory_detector_name
-    self.gesture_detector_name = gesture_detector_name
+  def __init__(self, name:str, input_streams:dict[str, str], output_streams:dict[str, str], cursor_scale:float,
+               cursor_initial_x:int, cursor_initial_y:int, control_cursor:bool=False):
+    super(MouseRing, self).__init__(name=name, input_streams=input_streams, output_streams=output_streams)
     self.cursor_scale = cursor_scale
     self.cursor_initial_x = cursor_initial_x
     self.cursor_initial_y = cursor_initial_y
@@ -17,17 +15,14 @@ class MouseRing(Detector):
       from pynput.mouse import Controller
       self.mouse = Controller()
 
-  def reset(self):
+  def handle_input_stream_touch_state(self, data:str, timestamp:float) -> None:
     if self.control_cursor:
-      self.mouse.position = (self.cursor_initial_x, self.cursor_initial_y)
-  
-  def handle_detector_event(self, event:DetectorEvent):
-    if event.detector == self.trajectory_detector_name:
-      if self.control_cursor:
-        self.mouse.move(event.data[0] * self.cursor_scale, event.data[1] * self.cursor_scale)
-    if event.detector == self.gesture_detector_name and self.control_cursor:
       from pynput.mouse import Button
-      if event.data == 'click':
+      if data == 'click':
         self.mouse.click(Button.left)
-      elif event.data == 'double_click':
-        self.reset()
+      elif data == 'double_click':
+        self.mouse.position = (self.cursor_initial_x, self.cursor_initial_y)
+
+  def handle_input_stream_trajectory(self, data:tuple[float, float], timestamp:float) -> None:
+    if self.control_cursor:
+      self.mouse.move(data[0] * self.cursor_scale, data[1] * self.cursor_scale)

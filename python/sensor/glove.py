@@ -6,7 +6,8 @@ from enum import Enum
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 
-from sensor.data.basic_data import IMUData, QuaternionData
+from sensor.data.quaternion_data import QuaternionData
+from sensor.data.imu_data import IMUData
 from sensor.data.glove_data import GloveData
 from utils.logger import logger
 from utils.file_utils import load_json

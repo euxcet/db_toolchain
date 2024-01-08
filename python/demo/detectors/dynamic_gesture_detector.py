@@ -3,17 +3,17 @@ import torch
 import torch.nn.functional as F
 from utils.window import Window
 from model.imu_gesture_model import GestureNetCNN
-from demo.detector import Detector, DetectorEvent
+from demo.detector import Detector
 from sensor.data import IMUData
-from sensor import RingEvent, RingEventType, GloveEvent, GloveEventType, GloveIMUJointName
 
 class DynamicGestureDetector(Detector):
-  def __init__(self, name:str, device:str, devices:dict, num_classes:int, imu_window_length:int, result_window_length:int,
-               execute_interval:int, checkpoint_file:str, labels:list[str], confidence_threshold:list[float],
-               trigger_wait_time:list[float], min_trigger_interval: list[float], block:dict, handler=None):
+  def __init__(self, name:str, input_streams:dict[str, str], output_streams:dict[str, str], num_classes:int,
+               imu_window_length:int, result_window_length:int, execute_interval:int, checkpoint_file:str,
+               labels:list[str], confidence_threshold:list[float], trigger_wait_time:list[float],
+               min_trigger_interval: list[float], block:dict) -> None:
     super(DynamicGestureDetector, self).__init__(
-      name=name, model=GestureNetCNN(num_classes=num_classes),
-      device=devices[device], checkpoint_file=checkpoint_file, handler=handler)
+      name=name, input_streams=input_streams, output_streams=output_streams,
+      model=GestureNetCNN(num_classes=num_classes), checkpoint_file=checkpoint_file)
     self.imu_window_length = imu_window_length
     self.num_classes = num_classes
     self.labels = labels
@@ -29,7 +29,7 @@ class DynamicGestureDetector(Detector):
     self.counter.print_interval = 1000
     self.counter.execute_interval = execute_interval
 
-  def trigger(self, gesture_id:int, current_time:float):
+  def trigger(self, gesture_id:int, current_time:float) -> None:
     label:list[str] = self.labels
     # trigger priority
     if gesture_id is not None:
@@ -48,10 +48,10 @@ class DynamicGestureDetector(Detector):
       if self.trigger_time[i] > 0 and \
         current_time >= self.trigger_time[i] + self.trigger_wait_time[i]:
         self.trigger_time[i] = 0
-        self.broadcast_event(label[i])
+        self.output(self.OUTPUT_STREAM_RESULT, label[i])
     
-  def detect(self, data):
-    self.imu_window.push(data)
+  def handle_input_stream_imu(self, data:IMUData, timestamp:float) -> None:
+    self.imu_window.push(data.to_numpy())
     if self.counter.count(enable_print=True, print_fps=True) and self.imu_window.full():
       current_time = time.time()
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().T
@@ -68,14 +68,3 @@ class DynamicGestureDetector(Detector):
       else:
         self.result_window.push(-1)
         self.trigger(None, current_time)
-
-  def handle_detector_event(self, event:DetectorEvent):
-    pass
-
-  def handle_ring_event(self, device, event:RingEvent):
-    if event.event_type == RingEventType.imu:
-      self.detect(event.data.to_numpy())
-
-  def handle_glove_event(self, device, event:GloveEvent):
-    if event.event_type == GloveEventType.pose:
-      self.detect(event.data.get_imu_data(GloveIMUJointName.INDEX_INTERMEDIATE).to_numpy())

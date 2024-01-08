@@ -10,16 +10,9 @@ from bleak import BleakClient
 from sensor.data import IMUData
 from utils.crc import crc16
 from utils.logger import logger
-from utils.counter import Counter
 from utils.file_utils import load_json
 from utils.data_utils import index_sequence
 from sensor.device import Device, DeviceLifeCircleEvent
-
-class RingEventType(Enum):
-  lifecircle = 0
-  imu = 1
-  touch = 2
-  battery = 3
 
 class RingAction(Enum):
   DISCONNECT = 0
@@ -29,16 +22,10 @@ class RingAction(Enum):
   LED_BLINK = 4
   GET_BATTERY = 5
 
-class RingEvent():
-  def __init__(self, event_type:RingEventType, data, timestamp:float, address:str) -> None:
-    self.event_type = event_type
-    self.data = data
-    self.address = address
-    self.timestamp = timestamp
-
 class RingConfig():
-  def __init__(self, address:str, name:str="Ring Unnamed", adapter:str=None, imu_freq=200,
-               enable_imu=True, enable_touch=True, quiet_log=False, **kwargs) -> None:
+  # TODO remove kwargs?
+  def __init__(self, address:str, name:str="Ring Unnamed", adapter:str=None, imu_freq:int=200,
+               enable_imu:bool=True, enable_touch:bool=True, quiet_log:bool=False, led_color:str='B', **kwargs) -> None:
     self.address = address
     self.name = name
     self.adapter = adapter
@@ -46,6 +33,7 @@ class RingConfig():
     self.enable_imu = enable_imu
     self.enable_touch = enable_touch
     self.quiet_log = quiet_log
+    self.led_color = led_color
 
   def load_from_file(file_path) -> RingConfig:
     return RingConfig(**load_json(file_path))
@@ -69,23 +57,23 @@ class NotifyProtocol():
   EDPT_OP_TOUCH_ACTION        = 0x24
 
   # SSP
-  SSP_ENSPP = 'ACK:ENSPP'
-  SSP_DISPP = 'ACK:DISPP'
-  SSP_DIFAST = 'ACK:DIFAST'
-  SPP_QUYCPS = 'TODO' # TODO
-  SPP_ENDBTP = 'TODO' # TODO
-  SPP_DIDBTP = 'ACK:DIDBTP'
-  SPP_ENDB6AX = 'ACK:ENDB6AX'
-  SPP_DIDB6AX = 'ACK:DIDB6AX'
-  SPP_ENDBLOG = 'ACK:ENDBLOG'
-  SPP_DIDBLOG = 'ACK:DIDBLOG'
-  SPP_REBOOT = ''
-  SPP_QUERYS = 'TODO' # TODO
-  SPP_TPARG = 'TODO' # TODO
-  SPP_IMUARG = 'SET IMUARG OK'
-  SPP_DEVINFO = 'SET DEVINFO OK'
-  SPP_LEDSET = 'LEDSET OK'
-  SPP_TPOPS = 'TPOPS SET OK'
+  SSP_ENSPP_RESPONSE = 'ACK:ENSPP'
+  SSP_DISPP_RESPONSE = 'ACK:DISPP'
+  SSP_DIFAST_RESPONSE = 'ACK:DIFAST'
+  SPP_QUYCPS_RESPONSE = 'TODO' # TODO
+  SPP_ENDBTP_RESPONSE = 'TODO' # TODO
+  SPP_DIDBTP_RESPONSE = 'ACK:DIDBTP'
+  SPP_ENDB6AX_RESPONSE = 'ACK:ENDB6AX'
+  SPP_DIDB6AX_RESPONSE = 'ACK:DIDB6AX'
+  SPP_ENDBLOG_RESPONSE = 'ACK:ENDBLOG'
+  SPP_DIDBLOG_RESPONSE = 'ACK:DIDBLOG'
+  SPP_REBOOT_RESPONSE = ''
+  SPP_QUERYS_RESPONSE = 'TODO' # TODO
+  SPP_TPARG_RESPONSE = 'TODO' # TODO
+  SPP_IMUARG_RESPONSE = 'SET IMUARG OK'
+  SPP_DEVINFO_RESPONSE = 'SET DEVINFO OK'
+  SPP_LEDSET_RESPONSE = 'LEDSET OK'
+  SPP_TPOPS_RESPONSE = 'TPOPS SET OK'
 
   # CHARACTERISTIC
   NOTIFY_CHARACTERISTIC = '0000FF11-0000-1000-8000-00805F9B34FB'
@@ -179,19 +167,33 @@ class NotifyProtocol():
           args = list(map(lambda x: x.split(':')[1], result.split(',')))
           acc_conv = {'0': '16g', '1': '8g', '2': '4g', '3': '2g'}
           gyro_conv = {'0': '2000dps', '1': '1000dps', '2': '500dps', '3': '250dps'}
-          decoded.append((NotifyProtocol.SPP_IMUARG, acc_conv[args[0]], gyro_conv[args[1]], args[3]))
+          decoded.append((NotifyProtocol.SPP_IMUARG_RESPONSE, acc_conv[args[0]], gyro_conv[args[1]], args[3]))
         else:
           decoded.append((result,))
       return decoded, bytearray()
 
+class RingStreamEnum(Enum):
+  IMU = 0
+  TOUCH = 1
+  LIFECYCLE = 2
+  BATTERY = 3
+
+  def __str__(self) -> str:
+    return {
+      RingStreamEnum.IMU: 'IMU',
+      RingStreamEnum.TOUCH: 'TOUCH',
+      RingStreamEnum.LIFECYCLE: 'LIFECYCLE',
+      RingStreamEnum.BATTERY: 'BATTERY',
+    }[self]
+
 class Ring(Device):
-  def __init__(self, config:RingConfig, event_queue:queue.Queue, led_color:str='B') -> None:
-    super(Ring, self).__init__(event_queue)
+  def __init__(self, config:RingConfig) -> None:
     self.config = config
+    super(Ring, self).__init__()
     self.action_queue = queue.Queue()
     self.imu_byte_array = bytearray()
     self.imu_mode = False
-    self.led_color = led_color
+    self.led_color = config.led_color
     self.lifecycle_status = DeviceLifeCircleEvent.on_create
 
   @property
@@ -202,28 +204,29 @@ class Ring(Device):
   def name(self) -> str:
     return self.config.name
 
-  def produce_event(self, event_type:RingEventType, data:Any) -> None:
-    super().produce_event(RingEvent(event_type, data, time.time(), self.config.address))
+  @property
+  def stream_names(self) -> str:
+    return [name for name in RingStreamEnum.__members__.values()]
 
   # lifecycle callbacks
   def on_pair(self) -> None:
     self.log_info("Pairing")
     self.lifecycle_status = DeviceLifeCircleEvent.on_pair
-    self.produce_event(RingEventType.lifecircle, DeviceLifeCircleEvent.on_pair)
+    self.produce_data(RingStreamEnum.LIFECYCLE, DeviceLifeCircleEvent.on_pair)
 
   def on_connect(self) -> None:
     self.log_info("Connected")
     self.lifecycle_status = DeviceLifeCircleEvent.on_connect
-    self.produce_event(RingEventType.lifecircle, DeviceLifeCircleEvent.on_connect)
+    self.produce_data(RingStreamEnum.LIFECYCLE, DeviceLifeCircleEvent.on_connect)
 
   def on_disconnect(self, *args, **kwargs) -> None:
     self.log_info("Disconnected")
     self.lifecycle_status = DeviceLifeCircleEvent.on_disconnect
-    self.produce_event(RingEventType.lifecircle, DeviceLifeCircleEvent.on_disconnect)
+    self.produce_data(RingStreamEnum.LIFECYCLE, DeviceLifeCircleEvent.on_disconnect)
 
   def on_error(self) -> None:
     self.lifecycle_status = DeviceLifeCircleEvent.on_error
-    self.produce_event(RingEventType.lifecircle, DeviceLifeCircleEvent.on_error)
+    self.produce_data(RingStreamEnum.LIFECYCLE, DeviceLifeCircleEvent.on_error)
 
   # active control
   async def connect(self) -> None:
@@ -266,22 +269,22 @@ class Ring(Device):
   def notify_callback(self, sender, data:bytearray) -> None:
     result = NotifyProtocol.decode_notify_callback(data)
     if result[0] == NotifyProtocol.EDPT_QUERY_SS:
-      self.produce_event(RingEventType.battery, result[1])
+      self.produce_data(RingStreamEnum.BATTERY, result[1])
     if result[0] == NotifyProtocol.EDPT_OP_TOUCH_ACTION:
       op_type, report_method, action_code = result[1:]
       if op_type < 2:
         self.log_info('Touch action method: ' + ['HID', 'BLE', 'HID & BLE'][report_method])
       elif op_type == 2:
-        self.produce_event(RingEventType.touch, action_code)
+        self.produce_data(RingStreamEnum.TOUCH, action_code)
 
   def spp_notify_callback(self, sender, data:bytearray):
     results, self.imu_byte_array = NotifyProtocol.decode_spp_notify_callback(data, self.imu_mode, self.imu_byte_array)
     if self.imu_mode:
       for data in results:
-        self.produce_event(RingEventType.imu, data)
+        self.produce_data(RingStreamEnum.IMU, data)
     else:
       for result in results:
-        if result[0] == NotifyProtocol.SPP_ENDB6AX:
+        if result[0] == NotifyProtocol.SPP_ENDB6AX_RESPONSE:
           self.imu_mode = True
         self.log_info(result[0])
 

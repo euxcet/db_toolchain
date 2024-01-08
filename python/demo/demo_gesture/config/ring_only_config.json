@@ -9,12 +9,17 @@
   "detectors": [
     {
       "type": "DynamicGestureDetector",
-      "name": "RingGestureDetector",
-      "device": "Ring",
+      "name": "DynamicGestureDetector",
+      "input_streams": {
+        "imu": "Ring_IMU"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "num_classes": 28,
       "imu_window_length": 200,
       "result_window_length": 4,
-      "checkpoint_file": "checkpoint/ring_xj_version_1007.pth",
+      "checkpoint_file": "checkpoint/ring.pth",
       "execute_interval": 10,
       "labels": ["r_move", "r_move", "r_move", "r_bomb", "r_close", "r_forward", "r_gather", "r_quick", "r_enemy", "r_cover", "r_repeat"],
       "confidence_threshold": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
@@ -25,7 +30,12 @@
     {
       "type": "GestureAggregator",
       "name": "GestureAggregator",
-      "detectors_name": ["RingGestureDetector", "GloveGestureDetector"],
+      "input_streams": {
+        "event": ["DynamicGestureDetector_RESULT"]
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "gestures": [
         { "name": "bomb", "events": ["r_bomb"] },
         { "name": "close", "events": ["r_close"] },

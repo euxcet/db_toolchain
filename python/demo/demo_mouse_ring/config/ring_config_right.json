@@ -9,8 +9,13 @@
   "detectors": [
     {
       "type": "DynamicGestureDetector",
-      "name": "GestureDetector",
-      "device": "Ring",
+      "name": "TouchStateDetector",
+      "input_streams": {
+        "imu": "Ring_IMU"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "num_classes": 5,
       "imu_window_length": 200,
       "result_window_length": 4,
@@ -34,8 +39,13 @@
     {
       "type": "TrajectoryDetector",
       "name": "TrajectoryDetector",
-      "device": "Ring",
-      "gesture_detector_name": "GestureDetector",
+      "input_streams": {
+        "imu": "Ring_IMU"
+      },
+      "output_streams": {
+        "touch_state": "TouchStateDetector_RESULT",
+        "result": "RESULT"
+      },
       "checkpoint_file": "checkpoint/trajectory_right.pth",
       "imu_window_length": 20,
       "move_threshold": 0.1,
@@ -45,12 +55,17 @@
     {
       "type": "MouseRing",
       "name": "MouseRing",
+      "input_streams": {
+        "touch_state": "TouchStateDetector_RESULT",
+        "trajectory": "TrajectoryDetector_RESULT"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "control_cursor": true,
       "cursor_scale": 15,
       "cursor_initial_x": 330,
-      "cursor_initial_y": 396,
-      "trajectory_detector_name": "TrajectoryDetector",
-      "gesture_detector_name": "GestureDetector"
+      "cursor_initial_y": 396
     }
   ]
 }

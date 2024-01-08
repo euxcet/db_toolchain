@@ -12,36 +12,35 @@ class DeviceLifeCircleEvent(Enum):
   on_error = 4
 
 class Device(DataProducer, metaclass=ABCMeta):
-  def __init__(self, event_queue:queue.Queue):
-    super(Device, self).__init__(event_queue)
-    pass
+  def __init__(self) -> None:
+    super(Device, self).__init__()
 
   # lifecycle callbacks
   @abstractmethod
-  def on_pair(self):
+  def on_pair(self) -> None:
     pass
 
   @abstractmethod
-  def on_connect(self):
+  def on_connect(self) -> None:
     pass
 
   @abstractmethod
-  def on_disconnect(self):
+  def on_disconnect(self) -> None:
     pass
 
   @abstractmethod
-  def on_error(self):
+  def on_error(self) -> None:
     pass
 
   # active control
   @abstractmethod
-  def connect(self):
+  def connect(self) -> None:
     pass
 
   @abstractmethod
-  def disconnect(self):
+  def disconnect(self) -> None:
     pass
 
   @abstractmethod
-  def reconnect(self):
+  def reconnect(self) -> None:
     pass

@@ -22,7 +22,7 @@ if __name__ == '__main__':
     for cfg in config['devices']
   }
   detectors = {
-    cfg['name']: detector_register.instance(cfg['type'], ignore_keys=['type'], kwargs={**cfg, **{'devices': devices}})
+    cfg['name']: detector_register.instance(cfg['type'], ignore_keys=['type'], kwargs=cfg)
     for cfg in config['detectors']
   }
   while True:

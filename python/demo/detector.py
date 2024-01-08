@@ -1,66 +1,40 @@
 from __future__ import annotations
+from typing import Any
 import torch
 import torch.nn as nn
 from utils.counter import Counter
-from sensor import Ring, RingEvent, ring_pool
-from sensor.glove import Glove, GloveEvent, glove_pool
 from utils.register import Register
-
-class DetectorEvent():
-  def __init__(self, detector:str, data):
-    self.detector = detector
-    self.data = data
-
-class DetectorEventBroadcaster():
-  def __init__(self):
-    self.detectors:list[Detector] = []
-
-  def add_detector(self, detector:str):
-    self.detectors.append(detector)
-
-  def remove_detector(self, detector:str):
-    self.detectors.append(detector)
-
-  def broadcast_event(self,event):
-    for d in self.detectors:
-      d.handle_detector_event(event)
-
-broadcaster = DetectorEventBroadcaster()
+from stream import Stream, stream_manager
 
 class Detector():
-  # TODO: use a thread to handle event?
-  def __init__(self, name:str, model:nn.Module=None, device:Ring|Glove=None, checkpoint_file:str=None, handler=None):
+  OUTPUT_STREAM_RESULT = "result"
+  def __init__(self, name:str, input_streams:dict[str, str], output_streams:dict[str, str],
+               model:nn.Module=None, checkpoint_file:str=None):
     self.name = name
     self.counter = Counter()
-    self.handler = handler
     # model
     if model is not None:
       self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
       self.model:nn.Module = model
       self.model.load_state_dict(torch.load(checkpoint_file, map_location=self.device))
       self.model.eval()
-    # device
-    if device is not None:
-      if type(device) is Ring:
-        ring_pool.bind_ring(self.handle_ring_event, ring=device)
-      elif type(device) is Glove:
-        glove_pool.bind_glove(self.handle_glove_event, glove=device)
-    broadcaster.add_detector(self)
 
-  def broadcast_event(self, data):
-    event = DetectorEvent(self.name, data)
-    if self.handler is not None:
-      self.handler(event)
-    broadcaster.broadcast_event(event)
+    self.output_stream:dict[str, Stream] = {}
+    # stream
+    for stream, local_stream_name in output_streams.items():
+      self.output_stream[stream] = stream_manager.add_stream(Stream(self.get_stream_name(local_stream_name)))
+    for stream, stream_name in input_streams.items():
+      if type(stream_name) is list:
+        for name in stream_name:
+          stream_manager.bind_stream(name, getattr(self, f'handle_input_stream_{stream}'))
+      else:
+        stream_manager.bind_stream(stream_name, getattr(self, f'handle_input_stream_{stream}'))
 
-  def handle_ring_event(self, device, event:RingEvent):
-    pass
+  def output(self, local_stream_name:str, data:Any):
+    self.output_stream[local_stream_name].put(data)
 
-  def handle_glove_event(self, device, event:GloveEvent):
-    pass
-
-  def handle_detector_event(self, event:DetectorEvent):
-    pass
+  def get_stream_name(self, local_stream_name:str):
+    return self.name + "_" + local_stream_name
 
   def __init_subclass__(cls) -> None:
     detector_register.register(cls.__name__, cls)

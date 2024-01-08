@@ -15,8 +15,13 @@
   "detectors": [
     {
       "type": "DynamicGestureDetector",
-      "name": "RingGestureDetector",
-      "device": "Ring",
+      "name": "DynamicGestureDetector",
+      "input_streams": {
+        "imu": "Ring_IMU"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "num_classes": 28,
       "imu_window_length": 200,
       "result_window_length": 4,
@@ -30,8 +35,13 @@
     },
     {
       "type": "StaticGestureDetector",
-      "name": "GloveGestureDetector",
-      "device": "Glove",
+      "name": "StaticGestureDetector",
+      "input_streams": {
+        "skeleton": "Glove_SKELETON"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "num_classes": 11,
       "checkpoint_file": "checkpoint/best.pth",
       "result_window_length": 10,
@@ -43,7 +53,13 @@
     {
       "type": "GestureAggregator",
       "name": "GestureAggregator",
-      "detectors_name": ["RingGestureDetector", "GloveGestureDetector"],
+      "input_streams": {
+        "dynamic": "DynamicGestureDetector_RESULT",
+        "static": "StaticGestureDetector_RESULT"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "gestures": [
         { "name": "捏拳", "events": ["r_bomb"] },
         { "name": "靠拢", "events": ["r_close"] },

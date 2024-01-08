@@ -1,6 +1,7 @@
 import numpy as np
 from enum import Enum
-from .basic_data import IMUData, QuaternionData
+from .imu_data import IMUData
+from .quaternion_data import QuaternionData
 
 class GloveQuaternionJointName(Enum):
   WRIST_JOINT = 0
