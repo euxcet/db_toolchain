@@ -13,16 +13,13 @@ class Metric(metaclass=ABCMeta):
     self.value = 0
 
   @abstractmethod
-  def update(self, output, target):
-    pass
+  def update(self, output, target): ...
 
   @abstractmethod
-  def compute(self):
-    pass
+  def compute(self): ...
 
   @abstractmethod
-  def reset(self):
-    pass
+  def reset(self): ...
 
 class CrossEntropyLoss(Metric):
   def __init__(self):

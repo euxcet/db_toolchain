@@ -13,13 +13,11 @@ class DataProducer(metaclass=ABCMeta):
 
   @property
   @abstractmethod
-  def name(self) -> str:
-    pass
+  def name(self) -> str: ...
 
   @property
   @abstractmethod
-  def stream_names(self) -> list[str]:
-    pass
+  def stream_names(self) -> list[str]: ...
 
   # stream
   def initialize_stream(self) -> None:

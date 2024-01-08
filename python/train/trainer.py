@@ -92,24 +92,19 @@ class Trainer(metaclass=ABCMeta):
     self.metric.compute(group='Test')
 
   @abstractmethod
-  def init_dataset(self):
-    pass
+  def init_dataset(self): ...
 
   @abstractmethod
-  def init_model(self):
-    pass
+  def init_model(self): ...
 
   @abstractmethod
-  def init_metric(self):
-    pass
+  def init_metric(self): ...
     
   @abstractmethod
-  def train_epoch(self, epoch:int):
-    pass
+  def train_epoch(self, epoch:int): ...
 
   @abstractmethod
-  def log_epoch(self, epoch:int):
-    pass
+  def log_epoch(self, epoch:int): ...
 
 def add_argument(parser:argparse.ArgumentParser):
   parser.add_argument("--num-classes", type=int, metavar="N", help="number of classes")

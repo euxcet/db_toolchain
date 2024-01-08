@@ -3,17 +3,13 @@ from sensor.device import Device
 from typing import Any
 
 class Pool(metaclass=ABCMeta):
-  def __init__(self):
-    pass
+  def __init__(self): ...
   
   @abstractmethod
-  def add_device(self, config:Any) -> Device:
-    pass
+  def add_device(self, config:Any) -> Device: ...
 
   @abstractmethod
-  def get_device(self, config:Any) -> None:
-    pass
+  def get_device(self, config:Any) -> None: ...
 
   @abstractmethod
-  def keep_alive_strategy(self) -> None:
-    pass
+  def keep_alive_strategy(self) -> None: ...

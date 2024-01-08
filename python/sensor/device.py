@@ -17,30 +17,23 @@ class Device(DataProducer, metaclass=ABCMeta):
 
   # lifecycle callbacks
   @abstractmethod
-  def on_pair(self) -> None:
-    pass
+  def on_pair(self) -> None: ...
 
   @abstractmethod
-  def on_connect(self) -> None:
-    pass
+  def on_connect(self) -> None: ...
 
   @abstractmethod
-  def on_disconnect(self) -> None:
-    pass
+  def on_disconnect(self) -> None: ...
 
   @abstractmethod
-  def on_error(self) -> None:
-    pass
+  def on_error(self) -> None: ...
 
   # active control
   @abstractmethod
-  def connect(self) -> None:
-    pass
+  def connect(self) -> None: ...
 
   @abstractmethod
-  def disconnect(self) -> None:
-    pass
+  def disconnect(self) -> None: ...
 
   @abstractmethod
-  def reconnect(self) -> None:
-    pass
+  def reconnect(self) -> None: ...

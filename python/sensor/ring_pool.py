@@ -17,8 +17,7 @@ class RingPool(Pool):
       keep_alive_thread.daemon = True
       keep_alive_thread.start()
 
-  def keep_alive_strategy(self):
-    pass
+  def keep_alive_strategy(self): ...
 
   def add_device(self, config:RingConfig, wait_until_connect:bool=False) -> Ring:
     if config.address in self.rings:
