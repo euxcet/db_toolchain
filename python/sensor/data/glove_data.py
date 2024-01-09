@@ -35,12 +35,9 @@ class GloveIMUJointName(Enum):
   PINKY_INTERMEDIATE = 10
 
 class GloveData():
-  # TODO: use a class to store basic information.
-  def __init__(self, basic:dict, imu_data:list[IMUData]=None, quaternion_data:list[QuaternionData]=None, timestamp:float=0):
-    self.basic = basic
+  def __init__(self, imu_data:list[IMUData]=None, quaternion_data:list[QuaternionData]=None):
     self.imu_data:list[IMUData] = imu_data
     self.quaternion_data:list[QuaternionData] = quaternion_data
-    self.timestamp = timestamp
 
   # TODO: handle exception
   def get_imu_data(self, joint_name:GloveIMUJointName) -> IMUData:

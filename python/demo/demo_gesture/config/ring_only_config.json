@@ -16,7 +16,7 @@
       "output_streams": {
         "result": "RESULT"
       },
-      "num_classes": 28,
+      "num_classes": 19,
       "imu_window_length": 200,
       "result_window_length": 4,
       "checkpoint_file": "checkpoint/ring.pth",

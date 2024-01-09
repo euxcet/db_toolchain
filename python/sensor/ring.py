@@ -22,6 +22,9 @@ class RingAction(Enum):
   LED_BLINK = 4
   GET_BATTERY = 5
 
+  def __str__(self):
+    return self.name
+
 class RingConfig():
   # TODO remove kwargs?
   def __init__(self, address:str, name:str="Ring Unnamed", adapter:str=None, imu_freq:int=200,
@@ -173,18 +176,13 @@ class NotifyProtocol():
       return decoded, bytearray()
 
 class RingStreamEnum(Enum):
-  IMU = 0
-  TOUCH = 1
-  LIFECYCLE = 2
+  LIFECYCLE = 0
+  IMU = 1
+  TOUCH = 2
   BATTERY = 3
 
   def __str__(self) -> str:
-    return {
-      RingStreamEnum.IMU: 'IMU',
-      RingStreamEnum.TOUCH: 'TOUCH',
-      RingStreamEnum.LIFECYCLE: 'LIFECYCLE',
-      RingStreamEnum.BATTERY: 'BATTERY',
-    }[self]
+    return self.name
 
 class Ring(Device):
   def __init__(self, config:RingConfig) -> None:

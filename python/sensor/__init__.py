@@ -1,8 +1,8 @@
 from .device import Device, DeviceLifeCircleEvent
 from .ring import Ring, RingConfig, RingAction
 from .ring_pool import ring_pool
-from .glove import Glove, GloveConfig, GloveEvent, GloveEventType, glove_pool
-from .data.glove_data import GloveIMUJointName, GloveQuaternionJointName
+from .glove import Glove, GloveConfig
+from .glove_pool import glove_pool
 
 def add_device(config:dict, ring_address:str=None, glove_ip:str=None):
   if config['type'] == 'ring':

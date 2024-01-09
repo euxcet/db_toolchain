@@ -27,7 +27,7 @@ class StaticGestureDetector(Detector):
     # self.visualizer = Visualizer()
     # self.visualizer.start()
     
-  def handle_input_stream_skeleton(self, data:np.ndarray, timestamp:float) -> None:
+  def handle_input_stream_quaternion(self, data:np.ndarray, timestamp:float) -> None:
     if self.counter.count(enable_print=False, print_fps=True):
       current_time = time.time()
       input_tensor = torch.tensor(data.astype(np.float32)).reshape(1, 64).to(self.device)
