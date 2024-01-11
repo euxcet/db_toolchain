@@ -37,22 +37,22 @@
         "result": "RESULT"
       },
       "gestures": [
-        { "name": "bomb", "events": ["r_bomb"] },
-        { "name": "close", "events": ["r_close"] },
-        { "name": "cover", "events": ["r_cover"] },
-        { "name": "enemy", "events": ["r_enemy"] },
-        { "name": "gather", "events": ["r_gather"] },
-        { "name": "quick", "events": ["r_quick"] },
-        { "name": "forward", "events": ["r_forward"] },
-        { "name": "repeat", "events": ["r_repeat"] },
-        { "name": "hostage", "events": ["r_move", "g_hostage"] },
-        { "name": "prepare", "events": ["r_move", "g_prepare"] },
-        { "name": "ok", "events": ["r_move", "g_ok"] },
-        { "name": "safe", "events": ["r_move", "g_safe"] },
-        { "name": "danger", "events": ["r_move", "g_danger"] },
-        { "name": "search", "events": ["r_move", "g_search"] },
-        { "name": "sniper", "events": ["r_move", "g_sniper"] },
-        { "name": "stop", "events": ["r_move", "g_stop"] }
+        { "name": "捏拳", "events": ["r_bomb"] },
+        { "name": "靠拢", "events": ["r_close"] },
+        { "name": "双指捏合", "events": ["r_cover"] },
+        { "name": "握拳双击", "events": ["r_enemy"] },
+        { "name": "画圈", "events": ["r_gather"] },
+        { "name": "赶快", "events": ["r_quick"] },
+        { "name": "前进", "events": ["r_forward"] },
+        { "name": "重复", "events": ["r_repeat"] },
+        { "name": "握脖子", "events": ["g_hostage"] },
+        { "name": "准备", "events": ["g_prepare"] },
+        { "name": "确认", "events": ["g_ok"] },
+        { "name": "支持", "events": ["g_safe"] },
+        { "name": "反对", "events": ["g_danger"] },
+        { "name": "指眼睛", "events": ["g_search"] },
+        { "name": "圆圈", "events": ["g_sniper"] },
+        { "name": "停止", "events": ["g_stop"] }
       ]
     }
   ]

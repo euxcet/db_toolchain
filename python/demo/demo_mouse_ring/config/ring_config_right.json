@@ -40,10 +40,10 @@
       "type": "TrajectoryDetector",
       "name": "TrajectoryDetector",
       "input_streams": {
-        "imu": "Ring_IMU"
+        "imu": "Ring_IMU",
+        "touch_state": "TouchStateDetector_RESULT"
       },
       "output_streams": {
-        "touch_state": "TouchStateDetector_RESULT",
         "result": "RESULT"
       },
       "checkpoint_file": "checkpoint/trajectory_right.pth",

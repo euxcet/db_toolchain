@@ -8,17 +8,23 @@
   ],
   "detectors": [
     {
-      "type": "GestureDetector",
-      "name": "GestureDetector",
-      "device": "Ring",
+      "type": "DynamicGestureDetector",
+      "name": "TouchStateDetector",
+      "input_streams": {
+        "imu": "Ring_IMU"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "num_classes": 5,
       "imu_window_length": 200,
       "result_window_length": 4,
       "checkpoint_file": "checkpoint/touch_ring.pth",
       "execute_interval": 10,
-      "label": ["touch_down", "touch_up", "move", "click", "double_click"],
+      "labels": ["touch_down", "touch_up", "move", "click", "double_click"],
       "confidence_threshold": [0.7, 0.9, 0.9, 0.9, 0.9],
       "trigger_wait_time": [0, 0, 0, 0.3, 0],
+      "min_trigger_interval": [0.8, 0.8, 0.8, 0.8, 0.8],
       "block": {
         "click": {
           "gesture": ["touch_down"],
@@ -33,8 +39,13 @@
     {
       "type": "TrajectoryDetector",
       "name": "TrajectoryDetector",
-      "device": "Ring",
-      "gesture_detector_name": "GestureDetector",
+      "input_streams": {
+        "imu": "Ring_IMU",
+        "touch_state": "TouchStateDetector_RESULT"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "checkpoint_file": "checkpoint/trajectory_right_vertical.pth",
       "imu_window_length": 20,
       "move_threshold": 0.1,
@@ -44,12 +55,17 @@
     {
       "type": "MouseRing",
       "name": "MouseRing",
+      "input_streams": {
+        "touch_state": "TouchStateDetector_RESULT",
+        "trajectory": "TrajectoryDetector_RESULT"
+      },
+      "output_streams": {
+        "result": "RESULT"
+      },
       "control_cursor": true,
-      "cursor_scale": 10,
+      "cursor_scale": 15,
       "cursor_initial_x": 330,
-      "cursor_initial_y": 396,
-      "trajectory_detector_name": "TrajectoryDetector",
-      "gesture_detector_name": "GestureDetector"
+      "cursor_initial_y": 396
     }
   ]
 }
