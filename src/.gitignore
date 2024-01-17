@@ -1,8 +1,0 @@
-*.pt
-*.pth
-*.tar
-*.bin
-*.npy
-*.txt
-local_dataset/
-runs/

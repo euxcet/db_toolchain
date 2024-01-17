@@ -1,21 +1,26 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
-name = "toolchain_db"
-version = "0.0.1"
+name = "db_toolchain"
+version = "0.1.0"
+description = "Default template for PDM package"
 authors = [
-  { name="Euxcet", email="zcc.qwer@gmail.com" },
+    {name = "euxcet", email = "zcc.qwer@gmail.com"},
 ]
-description = ""
+dependencies = [
+    "colorlog>=6.8.0",
+    "numpy>=1.26.3",
+    "multipledispatch>=1.0.0",
+    "torch>=2.1.2",
+    "pyquaternion>=0.9.9",
+    "bleak>=0.20.2",
+]
+requires-python = ">=3.11"
 readme = "README.md"
-requires-python = ">=3.10"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
+license = {text = "MIT"}
 
-[project.urls]
-"Homepage" = "https://github.com/euxcet/toolchain_db"
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+package-type = "library"

@@ -1,0 +1,2 @@
+pdm build
+pdm install
