@@ -8,6 +8,9 @@ class DeviceManager():
   
   def add_device(self, device: Device):
     self.devices[device.name] = device
-    self.executor.submit(device.connect)
+
+  def start(self):
+    for device in self.devices.values():
+      self.executor.submit(device.connect)
 
 device_manager = DeviceManager()

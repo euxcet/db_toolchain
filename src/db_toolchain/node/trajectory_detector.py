@@ -15,8 +15,8 @@ class TrajectoryDetector(TorchNode):
   def __init__(
       self,
       name:str,
-      input_streams:dict[str, str],
-      output_streams:dict[str, str],
+      input_edges:dict[str, str],
+      output_edges:dict[str, str],
       checkpoint_file:str,
       imu_window_length:int,
       execute_interval:int,
@@ -25,8 +25,8 @@ class TrajectoryDetector(TorchNode):
   ) -> None:
     super(TrajectoryDetector, self).__init__(
       name=name,
-      input_streams=input_streams,
-      output_streams=output_streams,
+      input_edges=input_edges,
+      output_edges=output_edges,
       model=TrajectoryLSTMModel(),
       checkpoint_file=checkpoint_file
     )
@@ -40,7 +40,7 @@ class TrajectoryDetector(TorchNode):
     self.last_unstable_move = Window(30)
     self.counter.execute_interval = execute_interval
 
-  def handle_input_stream_imu(self, data:IMUData, timestamp:float) -> None:
+  def handle_input_edge_imu(self, data:IMUData, timestamp:float) -> None:
     self.imu_window.push(data)
     if self.counter.count() and self.imu_window.full() and self.touching:
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().reshape(1, self.imu_window_length, 6)).to(self.device)
@@ -54,7 +54,7 @@ class TrajectoryDetector(TorchNode):
       self.last_unstable_move.push(move)
       self.output(self.OUTPUT_EDGE_RESULT, move)
 
-  def handle_input_stream_touch_state(self, data:str, timestamp:float) -> None:
+  def handle_input_edge_touch_state(self, data:str, timestamp:float) -> None:
     if data == 'touch_down':
       self.touching = True
     elif data in ['touch_up', 'click', 'double_click']:

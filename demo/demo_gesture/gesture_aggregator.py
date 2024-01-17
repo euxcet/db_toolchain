@@ -1,10 +1,10 @@
 import time
 import numpy as np
-from ..framework.node import Node
-from ..utils.logger import logger
+from db_toolchain.framework.node import Node
 
 class GestureAggregator(Node):
 
+  INPUT_EDGE_EVENT = 'event'
   OUTPUT_EDGE_RESULT = 'result'
 
   def __init__(
@@ -14,7 +14,11 @@ class GestureAggregator(Node):
       output_edges:dict[str, str],
       gestures:list,
   ) -> None:
-    super(GestureAggregator, self).__init__(name=name, input_edges=input_edges, output_edges=output_edges)
+    super(GestureAggregator, self).__init__(
+      name=name,
+      input_edges=input_edges,
+      output_edges=output_edges,
+    )
     self.gestures = [self.Gesture(**gesture_config) for gesture_config in gestures]
 
   def handle_input_edge_event(self, event: str, timestamp: float) -> None:

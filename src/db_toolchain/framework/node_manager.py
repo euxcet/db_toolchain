@@ -16,4 +16,7 @@ class NodeManager():
           if issubclass(type(node), Device):
             device_manager.add_device(node)
 
+  def start(self):
+    device_manager.start()
+
 node_manager = NodeManager()
