@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from db_toolchain.framework.node import Node
+from db_core.framework.node import Node
 
 class GestureAggregator(Node):
 

@@ -1,9 +1,9 @@
 [project]
-name = "db_toolchain"
+name = "db_core"
 version = "0.1.0"
 description = "Default template for PDM package"
 authors = [
-    {name = "euxcet", email = "zcc.qwer@gmail.com"},
+    {name = "euxcet", email = "zhouchengchi@qiyuanlab.com"},
 ]
 dependencies = [
     "colorlog>=6.8.0",

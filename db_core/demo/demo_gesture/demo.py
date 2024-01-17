@@ -1,10 +1,10 @@
 import time
 import argparse
-from db_toolchain.node import *
-from db_toolchain.device import *
-from db_toolchain.framework.node_manager import node_manager
-from db_toolchain.utils.file_utils import load_json
-from db_toolchain.utils.config import fill_value_by_name
+from db_core.node import *
+from db_core.device import *
+from db_core.framework.node_manager import node_manager
+from db_core.utils.file_utils import load_json
+from db_core.utils.config import fill_value_by_name
 from gesture_aggregator import GestureAggregator
 
 def run():
