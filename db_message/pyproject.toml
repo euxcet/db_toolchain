@@ -5,7 +5,10 @@ description = "Default template for PDM package"
 authors = [
     {name = "euxcet", email = "zhouchengchi@qiyuanlab.com"},
 ]
-dependencies = []
+dependencies = [
+    "protobuf>=4.25.2",
+    "click>=8.1.7",
+]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
@@ -17,3 +20,9 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 package-type = "library"
+
+[project.scripts]
+dbm = "db_message.main:cli"
+
+[tool.pdm.scripts]
+dbm = {call = "db_message.main:cli"}
