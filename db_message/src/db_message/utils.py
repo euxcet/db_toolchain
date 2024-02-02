@@ -42,7 +42,6 @@ def input_option(
   options = list(map(str, options))
   readline.set_completer(readline_completer(options))
   default = options[default]
-  print(blacklist)
   while True:
     print(f'{prompt} [bold cyan]({default})[/bold cyan]: ')
     option = input().strip()

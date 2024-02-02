@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import shutil
 import readline
-from rich import print
+from rich import print, print_json
 from rich.text import Text
+from rich.markdown import Markdown
 from pathlib import Path
 from .repository_manager import repository_manager
 from .git_repository import GitRepository
@@ -21,8 +22,7 @@ class Module():
     self.path = path
 
   def add(self) -> None:
-    config:dict = load_json(Path('./dbm_module.json'))
-    print(config)
+    config: dict = self.load_config()
     # Only support GitRepository right now.
     print(Text('Add a Synchronous File to this Module', style="green"))
     repo:GitRepository = repository_manager.get(input_option(
@@ -49,7 +49,7 @@ class Module():
       'save_filename': save_filename,
     }
     config['files'].append(file_config)
-    save_json(Path('./dbm_module.json'), config)
+    self.save_config(config)
 
     shutil.copy(Path(repo.local, file), Path(save_filename))
     compiler_instance:Compiler = compiler_register.instance(compiler)
@@ -57,17 +57,39 @@ class Module():
 
     repo.restore(status)
 
-  def update(self) -> None:
-    config:dict = load_json(Path('./dbm_module.json'))
+  def update_file(self, file_config: dict) -> None:
+    repo:GitRepository = repository_manager.get(file_config['repository'])
+    status = repo.store()
+    repo.checkout(file_config['branch'])
+    repo.checkout(file_config['commit'])
+    shutil.copy(Path(repo.local, file_config['file']), Path(file_config['save_filename']))
+    compiler_instance:Compiler = compiler_register.instance(file_config['compiler'])
+    compiler_instance.compile(Path(file_config['save_filename']))
+    repo.restore(status)
+
+  def update(self, save_filename: str = None) -> None:
+    config: dict = self.load_config()
     for file_config in config['files']:
-      repo:GitRepository = repository_manager.get(file_config['repository'])
-      status = repo.store()
-      repo.checkout(file_config['branch'])
-      repo.checkout(file_config['commit'])
-      shutil.copy(Path(repo.local, file_config['file']), Path(file_config['save_filename']))
-      compiler_instance:Compiler = compiler_register.instance(file_config['compiler'])
-      compiler_instance.compile(Path(file_config['save_filename']))
-      repo.restore(status)
+      # TODO wildcard matching
+      if save_filename is None or file_config['save_filename'] == save_filename:
+        self.update_file(file_config)
+
+  def remove(self, filename: str) -> None:
+    config:dict = self.load_config()
+    for file_config in config['files']:
+      # TODO wildcard matching
+      if file_config['save_filename'] == filename:
+        config['files'].remove(file_config)
+        print(Text(f'{filename} removed.', style="green"))
+        self.save_config(config)
+        return
+    print(Text(f'{filename} not found.', style="red"))
+
+  def load_config(self) -> dict:
+    return load_json(Path(self.path, self.DB_MESSAGE_CONFIG))
+
+  def save_config(self, config: dict):
+    save_json(Path(self.DB_MESSAGE_CONFIG), config)
 
   def create(path: Path) -> Module:
     name = input('Module name: ').strip()
