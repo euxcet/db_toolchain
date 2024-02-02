@@ -1,5 +1,5 @@
 import numpy as np
-from db_core.framework.node import Node
+from db_graph.framework.node import Node
 
 class MouseRing(Node):
 

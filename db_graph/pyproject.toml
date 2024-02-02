@@ -1,5 +1,5 @@
 [project]
-name = "db_core"
+name = "db_graph"
 version = "0.1.0"
 description = "Default template for PDM package"
 authors = [
