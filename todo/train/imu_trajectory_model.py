@@ -8,6 +8,8 @@ class TrajectoryLSTMModel(nn.Module):
     super(TrajectoryLSTMModel, self).__init__()
     self.lstm1 = nn.LSTM(input_size, hidden_size, 1)
     self.lstm2 = nn.LSTM(hidden_size, hidden_size, 1)
+    # self.dropout1 = nn.Dropout(0.25)
+    # self.dropout2 = nn.Dropout(0.25)
     self.bn1 = nn.BatchNorm1d(num_features=128)
     self.bn2 = nn.BatchNorm1d(num_features= output_size)
     self.fc1 = nn.Linear(hidden_size * time_steps, 128)

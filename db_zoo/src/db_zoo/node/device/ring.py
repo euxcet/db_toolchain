@@ -1,17 +1,17 @@
 from __future__ import annotations
+from ...utils.version import check_library_version
+check_library_version('bleak', '0.20.2')
 import time
 import queue
 import struct
 import asyncio
 import inspect
 from enum import Enum
-from typing import Any
 from bleak import BleakClient
-from ..framework.device import Device, DeviceLifeCircleEvent
-from ..data.imu_data import IMUData
-from ..utils.logger import logger
-from ..utils.file_utils import load_json
-from ..utils.data_utils import index_sequence
+from db_graph.framework.device import Device, DeviceLifeCircleEvent
+from db_graph.data.imu_data import IMUData
+from db_graph.utils.logger import logger
+from db_graph.utils.data_utils import index_sequence
 
 class RingAction(Enum):
   DISCONNECT = 0

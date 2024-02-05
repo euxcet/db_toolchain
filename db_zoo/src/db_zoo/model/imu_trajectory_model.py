@@ -2,14 +2,19 @@ import torch
 import torch.nn as nn
 
 # TODO: upgrade model
-
 class TrajectoryLSTMModel(nn.Module):
-  def __init__(self, input_size=6, hidden_size=32, output_size=2, time_steps=20):
+  def __init__(
+      self,
+      input_size: int = 6,
+      hidden_size: int = 32,
+      output_size: int = 2,
+      time_steps: int = 20
+  ) -> None:
     super(TrajectoryLSTMModel, self).__init__()
     self.lstm1 = nn.LSTM(input_size, hidden_size, 1)
     self.lstm2 = nn.LSTM(hidden_size, hidden_size, 1)
     self.bn1 = nn.BatchNorm1d(num_features=128)
-    self.bn2 = nn.BatchNorm1d(num_features= output_size)
+    self.bn2 = nn.BatchNorm1d(num_features=output_size)
     self.fc1 = nn.Linear(hidden_size * time_steps, 128)
     self.relu1 = nn.ReLU()
     self.fc2 = nn.Linear(128, 32)

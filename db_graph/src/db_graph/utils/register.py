@@ -7,14 +7,25 @@ class Register(Generic[T]):
   def __init__(self) -> None:
     self.items:dict[str, T] = {}
 
-  def register(self, name:str, item:T) -> None:
+  def register(
+      self,
+      name: str,
+      item: T,
+      show_info_log: bool = False,
+  ) -> None:
     if name not in self.items:
       self.items[name] = item
-      logger.info(f'Register node {name}.')
+      if show_info_log:
+        logger.info(f'Register {name}.')
     else:
       logger.warning(f'{name} has been registered.')
 
-  def instance(self, name:str, kwargs:dict[str, Any], ignore_keys:list[str]=[]) -> None:
+  def instance(
+      self,
+      name: str,
+      kwargs: dict[str, Any] = {},
+      ignore_keys: list[str] = []
+  ) -> None:
     for key in ignore_keys:
       try:
         kwargs.pop(key)

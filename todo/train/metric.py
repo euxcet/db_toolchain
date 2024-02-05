@@ -1,6 +1,6 @@
 from __future__ import annotations
 import torch.nn.functional as F
-from utils.logger import logger
+from logger import logger
 from typing import Any
 from abc import ABCMeta, abstractmethod
 import torch

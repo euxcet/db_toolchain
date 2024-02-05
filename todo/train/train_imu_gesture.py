@@ -7,11 +7,11 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 
-from model.imu_gesture_model import GestureNetCNN
-from train.imu_gesture_dataset import get_imu_gesture_dataset
+from imu_gesture_model import GestureNetCNN
+from imu_gesture_dataset import get_imu_gesture_dataset
 
-from train.trainer import Trainer, add_argument
-from train.metric import MetricGroup, CrossEntropyLoss, AccuracyMetric, ConfusionMatrixMetric
+from trainer import Trainer, add_argument
+from metric import MetricGroup, CrossEntropyLoss, AccuracyMetric, ConfusionMatrixMetric
 
 class IMUGestureTrainer(Trainer):
   def __init__(self, **kwargs):

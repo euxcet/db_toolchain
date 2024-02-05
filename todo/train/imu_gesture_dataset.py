@@ -2,13 +2,13 @@ import struct
 import numpy as np
 import os.path as osp
 from torch.utils.data import Dataset
-from dataset.file_dataset import FileDataset
-from data.imu_data import IMUData
-from utils.data_utils import slice_data
+from file_dataset import FileDataset
+from imu_data import IMUData
+from data_utils import slice_data
 
 class IMUGestureDataset(Dataset):
   def __init__(self, ring_data, labels):
-    self.ring_data = np.swapaxes(ring_data, 1, 2).reshape(-1, 6, 1, 200)
+    self.ring_data = np.swapaxes(ring_data, 1, 2).reshape(-1, 6, 1, 50)
     self.labels = labels
 
   def __len__(self):

@@ -7,7 +7,7 @@ from typing import TypeVar, Generic
 _T = TypeVar('_T')
 
 class Window(Generic[_T]):
-  def __init__(self, window_length: int, window: list[_T] = None):
+  def __init__(self, window_length:int, window:list[_T]=None):
     self.window_length = window_length
     self.window:list[_T] = [] if window is None else window
     self.push_count = 0
@@ -27,13 +27,13 @@ class Window(Generic[_T]):
   def last(self) -> _T:
     return self.window[-1]
 
-  def get(self, index: int) -> _T:
+  def get(self, index:int) -> _T:
     return self.window[index]
 
-  def head(self, length: int) -> Window[_T]:
+  def head(self, length:int) -> Window[_T]:
     return Window[_T](self.window_length, self.window[:length])
 
-  def tail(self, length: int) -> Window[_T]:
+  def tail(self, length:int) -> Window[_T]:
     return Window[_T](self.window_length, self.window[-length:])
 
   def capacity(self):
@@ -45,19 +45,19 @@ class Window(Generic[_T]):
   def full(self):
     return len(self.window) == self.window_length
 
-  def sum(self, func: function = lambda x:x):
+  def sum(self, func:function=lambda x:x):
     return sum(map(func, self.window))
 
-  def count(self, func: function = lambda x:x) -> int:
+  def count(self, func:function=lambda x:x) -> int:
     return len(list(filter(lambda x:x == True, map(func, self.window))))
 
-  def any(self, func: function = lambda x:x) -> bool:
+  def any(self, func:function=lambda x:x) -> bool:
     return any(map(func, self.window))
 
-  def all(self, func: function = lambda x:x) -> bool:
+  def all(self, func:function=lambda x:x) -> bool:
     return all(map(func, self.window))
 
-  def map(self, func: function = lambda x:x) -> Window:
+  def map(self, func:function=lambda x:x) -> Window:
     return Window(self.window_length, list(map(func, self.window)))
 
   def argmax(self) -> tuple[int, _T]:
