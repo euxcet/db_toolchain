@@ -2,7 +2,7 @@ from typing import Any
 from abc import ABC, abstractmethod
 
 from .edge import Edge
-from .edge_manager import edge_manager
+from .edge_manager import EdgeManager
 from ..utils.logger import logger
 from ..utils.register import Register
 from ..utils.counter import Counter
@@ -19,17 +19,19 @@ class Node(ABC):
   def __init__(
       self,
       name: str,
+      edge_manager: EdgeManager,
       input_edges: dict[str, str],
       output_edges: dict[str, str],
   ) -> None:
     self.name = name
+    self.edge_manager = edge_manager
     self.input_edge_names = input_edges
     self.output_edge_names = self._complete_output_edge_names(output_edges)
     self.output_edge: dict[str, Edge] = {}
     for local_key, edge_name in self.input_edge_names.items():
-      edge_manager.bind_edge(edge_name, getattr(self, f'{self.HANDLE_FUNCTION_PREFIX}{local_key}'))
+      self.edge_manager.bind_edge(edge_name, getattr(self, f'{self.HANDLE_FUNCTION_PREFIX}{local_key}'))
     for local_key, edge_name in self.output_edge_names.items():
-      self.output_edge[local_key] = edge_manager.add_edge(Edge(edge_name))
+      self.output_edge[local_key] = self.edge_manager.add_edge(Edge(edge_name))
     self.counter = Counter()
 
   def output(self, edge_name:str, data:Any) -> None:

@@ -1,11 +1,11 @@
 import time
 import argparse
-from db_graph.node import *
-from db_graph.device import *
-from db_graph.framework.node_manager import node_manager
+from db_graph.framework.graph import Graph
 from db_graph.utils.file_utils import load_json
 from db_graph.utils.config import fill_value_by_name
 from gesture_aggregator import GestureAggregator
+from db_zoo.node.algorithm.dynamic_gesture_detector import DynamicGestureDetector
+from db_zoo.node.algorithm.static_gesture_detector import StaticGestureDetector
 
 def run():
   parser = argparse.ArgumentParser()
@@ -18,8 +18,7 @@ def run():
   fill_value_by_name(config, 'Ring', 'address', args.ring)
   fill_value_by_name(config, 'Glove', 'ip', args.glove)
 
-  node_manager.add_nodes(config)
-  node_manager.start()
+  Graph(config).run()
 
   while True:
     time.sleep(1)

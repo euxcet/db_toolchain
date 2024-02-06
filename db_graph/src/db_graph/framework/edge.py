@@ -8,13 +8,13 @@ from typing import TypeVar, Generic, Any, Callable
 T = TypeVar('T')
 
 class Edge(Generic[T]):
-  def __init__(self, name:str, direct:bool=True) -> None:
+  def __init__(self, name: str, direct: bool = True) -> None:
     self.name = name
     self.direct = direct
     self.queue = Queue[tuple[T, float]]()
-    self.handlers:list[Callable] = []
+    self.handlers:list[Callable] = [] # handlers hold the actual edges of the graph.
 
-  def get(self, block:bool=True, timeout:float=None) -> tuple[T, float]:
+  def get(self, block: bool = True, timeout: float = None) -> tuple[T, float]:
     try:
       return self.queue.get(block, timeout)
     except:
@@ -26,7 +26,7 @@ class Edge(Generic[T]):
     except:
       return None
 
-  def put(self, data:T, timestamp:float=None) -> None:
+  def put(self, data: T, timestamp: float = None) -> None:
     timestamp = time.time() if timestamp is None else timestamp
     if self.direct:
       for handler in self.handlers:
@@ -34,13 +34,13 @@ class Edge(Generic[T]):
     else:
       self.queue.put((data, timestamp))
 
-  def bind(self, handler:Callable) -> None:
+  def bind(self, handler: Callable) -> None:
     self.handlers.append(handler)
 
-  def unbind(self, handler:Callable) -> None:
+  def unbind(self, handler: Callable) -> None:
     self.handlers.remove(handler)
 
-  def take_over(self, edge:Edge) -> None:
+  def take_over(self, edge: Edge) -> None:
     for handler in edge.handlers:
       self.bind(handler)
 
@@ -48,5 +48,5 @@ class PlaceHolderEdge(Edge):
   def __init__(self, name:str) -> None:
     super(PlaceHolderEdge, self).__init__(name)
 
-  def put(self, block:bool=True, timeout:float=None) -> tuple[T, float]:
+  def put(self, block: bool = True, timeout: float = None) -> tuple[T, float]:
     raise Exception()

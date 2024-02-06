@@ -1,10 +1,10 @@
 import time
 import argparse
-from db_graph.node import *
-from db_graph.device import *
-from db_graph.framework.node_manager import node_manager
+from db_graph.framework.graph import Graph
 from db_graph.utils.file_utils import load_json
 from db_graph.utils.config import fill_value_by_name
+from db_zoo.node.algorithm.dynamic_gesture_detector import DynamicGestureDetector
+from db_zoo.node.algorithm.trajectory_detector import TrajectoryDetector
 from mouse_ring import MouseRing
 
 def run():
@@ -18,8 +18,7 @@ def run():
   fill_value_by_name(config, 'Ring', 'address', args.ring)
   fill_value_by_name(config, 'TrajectoryDetector', 'checkpoint_file', args.checkpoint)
 
-  node_manager.add_nodes(config)
-  node_manager.start()
+  Graph(config).run()
 
   while True:
     time.sleep(1)

@@ -36,7 +36,7 @@ class EdgeManager():
       self.add_edge(PlaceHolderEdge(name))
     self.edges[name.lower()].bind(handler)
 
-  def unbind_stream(self, name:str, handler:Callable) -> None:
+  def unbind_edge(self, name:str, handler:Callable) -> None:
     name = name.lower()
     self.edges[name].unbind(handler)
 
