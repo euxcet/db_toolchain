@@ -6,6 +6,7 @@ from db_graph.utils.config import fill_value_by_name
 from gesture_aggregator import GestureAggregator
 from db_zoo.node.algorithm.dynamic_gesture_detector import DynamicGestureDetector
 from db_zoo.node.algorithm.static_gesture_detector import StaticGestureDetector
+from db_zoo.node.device.ring import Ring
 
 def run():
   parser = argparse.ArgumentParser()

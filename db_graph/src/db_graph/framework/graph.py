@@ -4,7 +4,7 @@ from .edge_manager import EdgeManager
 class Graph():
   def __init__(self, config: dict):
     self.edge_manager = EdgeManager()
-    self.node_manager = NodeManager(self.edge_manager)
+    self.node_manager = NodeManager(self)
     self.node_manager.add_nodes(config)
 
   def run(self):

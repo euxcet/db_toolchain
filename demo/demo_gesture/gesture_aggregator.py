@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 
 class GestureAggregator(Node):
@@ -9,13 +10,15 @@ class GestureAggregator(Node):
 
   def __init__(
       self,
-      name:str,
-      input_edges:dict[str, str],
-      output_edges:dict[str, str],
-      gestures:list,
+      name: str,
+      graph: Graph,
+      input_edges: dict[str, str],
+      output_edges: dict[str, str],
+      gestures: list,
   ) -> None:
     super(GestureAggregator, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges,
     )
@@ -34,7 +37,7 @@ class GestureAggregator(Node):
         events: list[str],
         window_time: float = 1.0,
         min_trigger_interval: float = 1.0,
-        keep_order: bool = False
+        keep_order: bool = False,
     ) -> None:
       self.name = name
       self.events = events

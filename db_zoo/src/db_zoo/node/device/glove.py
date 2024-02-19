@@ -4,10 +4,11 @@ import time
 import socket
 import struct
 from enum import Enum
+from db_graph.framework.graph import Graph
+from db_graph.framework.device import Device, DeviceLifeCircleEvent
 from db_graph.data.quaternion_data import QuaternionData
 from db_graph.data.imu_data import IMUData
 from db_graph.data.glove_data import GloveData
-from db_graph.framework.device import Device, DeviceLifeCircleEvent
 
 class GloveVersion(Enum):
   IMU_6AXIS = 0
@@ -31,6 +32,7 @@ class Glove(Device):
   def __init__(
       self,
       name: str,
+      graph: Graph,
       input_edges: dict[str, str],
       output_edges: dict[str, str],
       ip: str,
@@ -40,6 +42,7 @@ class Glove(Device):
   ) -> None:
     super(Glove, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges,
     )

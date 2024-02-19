@@ -3,6 +3,7 @@ import time
 import torch
 import torch.nn.functional as F
 import numpy as np
+from db_graph.framework.graph import Graph
 from db_graph.utils.window import Window
 from ...model.quat_gesture_model import FullyConnectedModel
 
@@ -14,6 +15,7 @@ class StaticGestureDetector(TorchNode):
   def __init__(
       self,
       name: str,
+      graph: Graph,
       input_streams: dict[str, str],
       output_streams: dict[str, str],
       num_classes: int,
@@ -26,6 +28,7 @@ class StaticGestureDetector(TorchNode):
   ) -> None:
     super(StaticGestureDetector, self).__init__(
       name=name,
+      graph=graph,
       input_streams=input_streams,
       output_streams=output_streams,
       model=FullyConnectedModel(num_classes=num_classes),

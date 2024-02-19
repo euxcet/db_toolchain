@@ -8,6 +8,7 @@ import asyncio
 import inspect
 from enum import Enum
 from bleak import BleakClient
+from db_graph.framework.graph import Graph
 from db_graph.framework.device import Device, DeviceLifeCircleEvent
 from db_graph.data.imu_data import IMUData
 from db_graph.utils.logger import logger
@@ -184,6 +185,7 @@ class Ring(Device):
   def __init__(
       self,
       name: str,
+      graph: Graph,
       address: str,
       input_edges: dict[str, str] = {},
       output_edges: dict[str, str] = {},
@@ -196,6 +198,7 @@ class Ring(Device):
   ) -> None:
     super(Ring, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges,
     )

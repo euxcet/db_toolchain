@@ -1,3 +1,4 @@
+from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 from db_graph.data.imu_data import IMUData
 from db_graph.utils.window import Window
@@ -10,6 +11,7 @@ class IMUStableDetector(Node):
   def __init__(
       self,
       name: str, 
+      graph: Graph,
       input_edges: dict[str, str],
       output_edges: dict[str, str],
       imu_window_length: int,
@@ -18,6 +20,7 @@ class IMUStableDetector(Node):
   ) -> None:
     super(IMUStableDetector, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges
     )

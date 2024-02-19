@@ -12,5 +12,3 @@ class DeviceManager():
   def start(self):
     for device in self.devices.values():
       self.executor.submit(device.connect)
-
-device_manager = DeviceManager()

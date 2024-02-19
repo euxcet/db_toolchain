@@ -51,5 +51,3 @@ class EdgeManager():
         time.sleep(0.001)
       else:
         time.sleep(0.01)
-
-edge_manager = EdgeManager()

@@ -1,6 +1,7 @@
 from .torch_node import TorchNode
 import torch
 import numpy as np
+from db_graph.framework.graph import Graph
 from db_graph.data.imu_data import IMUData
 from db_graph.utils.window import Window
 from db_graph.utils.filter import OneEuroFilter
@@ -15,6 +16,7 @@ class TrajectoryDetector(TorchNode):
   def __init__(
       self,
       name: str,
+      graph: Graph,
       input_edges: dict[str, str],
       output_edges: dict[str, str],
       checkpoint_file: str,
@@ -25,6 +27,7 @@ class TrajectoryDetector(TorchNode):
   ) -> None:
     super(TrajectoryDetector, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges,
       model=TrajectoryLSTMModel(),

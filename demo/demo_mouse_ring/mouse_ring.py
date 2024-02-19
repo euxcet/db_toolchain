@@ -1,4 +1,5 @@
 import numpy as np
+from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 
 class MouseRing(Node):
@@ -10,6 +11,7 @@ class MouseRing(Node):
   def __init__(
       self,
       name: str,
+      graph: Graph,
       input_edges: dict[str, str],
       output_edges: dict[str, str],
       cursor_scale: float = 10,
@@ -19,6 +21,7 @@ class MouseRing(Node):
   ) -> None:
     super(MouseRing, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges,
     )

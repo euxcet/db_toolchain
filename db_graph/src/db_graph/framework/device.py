@@ -15,11 +15,13 @@ class Device(Node, metaclass=ABCMeta):
   def __init__(
       self,
       name: str,
+      graph,
       input_edges: dict[str, str],
       output_edges: dict[str, str],
   ) -> None:
     super(Device, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges
     )

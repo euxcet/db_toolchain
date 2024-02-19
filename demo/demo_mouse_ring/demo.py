@@ -5,6 +5,7 @@ from db_graph.utils.file_utils import load_json
 from db_graph.utils.config import fill_value_by_name
 from db_zoo.node.algorithm.dynamic_gesture_detector import DynamicGestureDetector
 from db_zoo.node.algorithm.trajectory_detector import TrajectoryDetector
+from db_zoo.node.device.ring import Ring
 from mouse_ring import MouseRing
 
 def run():

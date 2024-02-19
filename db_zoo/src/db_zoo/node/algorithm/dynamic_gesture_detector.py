@@ -2,7 +2,7 @@ from .torch_node import TorchNode
 import time
 import torch
 import torch.nn.functional as F
-from db_graph.framework.torch_node import TorchNode
+from db_graph.framework.graph import Graph
 from db_graph.data.imu_data import IMUData
 from db_graph.utils.window import Window
 from ...model.imu_gesture_model import GestureNetCNN
@@ -15,6 +15,7 @@ class DynamicGestureDetector(TorchNode):
   def __init__(
       self,
       name: str,
+      graph: Graph,
       input_edges: dict[str, str],
       output_edges: dict[str, str],
       num_classes: int,
@@ -30,6 +31,7 @@ class DynamicGestureDetector(TorchNode):
   ) -> None:
     super(DynamicGestureDetector, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges,
       model=GestureNetCNN(num_classes=num_classes),

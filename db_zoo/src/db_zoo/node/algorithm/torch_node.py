@@ -4,12 +4,14 @@ check_library_version('torch', '2.0.1')
 from typing import Any
 import torch
 import torch.nn as nn
+from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 
 class TorchNode(Node):
   def __init__(
       self,
       name: str,
+      graph: Graph,
       input_edges: dict[str, str],
       output_edges: dict[str, str],
       model: nn.Module = None,
@@ -17,6 +19,7 @@ class TorchNode(Node):
   ) -> None:
     super(TorchNode, self).__init__(
       name=name,
+      graph=graph,
       input_edges=input_edges,
       output_edges=output_edges,
     )
