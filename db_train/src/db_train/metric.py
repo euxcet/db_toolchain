@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchmetrics.classification import Accuracy, ConfusionMatrix
+from typing_extensions import override
 from .utils.logger import logger
 
 class Metric(metaclass=ABCMeta):
@@ -26,14 +27,17 @@ class CrossEntropyLoss(Metric):
     self.sum = 0
     self.len = 0
 
+  @override
   def update(self, result: tuple):
     output, target = result
     self.sum += F.cross_entropy(output, target, reduction="sum").item()
     self.len += target.shape[0]
 
+  @override
   def compute(self):
     self.value = 0 if self.len == 0 else self.sum / self.len
 
+  @override
   def reset(self):
     self.value = 0
     self.sum = 0
@@ -52,6 +56,7 @@ class TrajectoryLoss(Metric):
     self.len = 0
     self.cos_sim = nn.CosineSimilarity(dim=1, eps=1e-8)
 
+  @override
   def update(self, result: tuple):
     output, target = result
     length_loss = torch.mean(torch.abs((torch.norm(output, dim=1) - torch.norm(target, dim=1))))
@@ -60,9 +65,11 @@ class TrajectoryLoss(Metric):
     self.sum += loss.item() * target.shape[0]
     self.len += target.shape[0]
 
+  @override
   def compute(self):
     self.value = 0 if self.len == 0 else self.sum / self.len
 
+  @override
   def reset(self):
     self.value = 0
     self.sum = 0
@@ -79,13 +86,16 @@ class AccuracyMetric(Metric):
     super(AccuracyMetric, self).__init__()
     self.metric = Accuracy(**kwargs).to(device)
 
+  @override
   def update(self, result: tuple):
     output, target = result
     self.metric.update(output, target)
 
+  @override
   def compute(self):
     self.value = self.metric.compute().float()
 
+  @override
   def reset(self):
     self.metric.reset()
     self.value = 0
@@ -101,13 +111,16 @@ class ConfusionMatrixMetric(Metric):
     super(ConfusionMatrixMetric, self).__init__()
     self.metric = ConfusionMatrix(**kwargs).to(device)
 
+  @override
   def update(self, result: tuple):
     output, target = result
     self.metric.update(output, target)
 
+  @override
   def compute(self):
     self.value = self.metric.compute()
 
+  @override
   def reset(self):
     self.metric.reset()
 
