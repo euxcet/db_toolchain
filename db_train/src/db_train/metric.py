@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchmetrics.classification import Accuracy, ConfusionMatrix
-from logger import logger
+from .utils.logger import logger
 
 class Metric(metaclass=ABCMeta):
   def __init__(self):
@@ -26,7 +26,8 @@ class CrossEntropyLoss(Metric):
     self.sum = 0
     self.len = 0
 
-  def update(self, output, target):
+  def update(self, result: tuple):
+    output, target = result
     self.sum += F.cross_entropy(output, target, reduction="sum").item()
     self.len += target.shape[0]
 
@@ -51,7 +52,8 @@ class TrajectoryLoss(Metric):
     self.len = 0
     self.cos_sim = nn.CosineSimilarity(dim=1, eps=1e-8)
 
-  def update(self, output, target):
+  def update(self, result: tuple):
+    output, target = result
     length_loss = torch.mean(torch.abs((torch.norm(output, dim=1) - torch.norm(target, dim=1))))
     angle_loss = 1 - torch.mean(self.cos_sim(output, target))
     loss = length_loss + angle_loss * 2
@@ -77,7 +79,8 @@ class AccuracyMetric(Metric):
     super(AccuracyMetric, self).__init__()
     self.metric = Accuracy(**kwargs).to(device)
 
-  def update(self, output, target):
+  def update(self, result: tuple):
+    output, target = result
     self.metric.update(output, target)
 
   def compute(self):
@@ -98,7 +101,8 @@ class ConfusionMatrixMetric(Metric):
     super(ConfusionMatrixMetric, self).__init__()
     self.metric = ConfusionMatrix(**kwargs).to(device)
 
-  def update(self, output, target):
+  def update(self, result: tuple):
+    output, target = result
     self.metric.update(output, target)
 
   def compute(self):
@@ -118,15 +122,18 @@ class ConfusionMatrixMetric(Metric):
     return "<Not Displayed>"
 
 class MetricGroup():
-  def __init__(self, lt_func):
+  def __init__(self, lt_func: function = lambda x, other: x['Valid']['Accuracy'] < other['Valid']['Accuracy']) -> None:
     self.metric:dict[str, dict[str, Metric]] = {}
     self.lt_func = lt_func
     self.add_groups(['Train', 'Valid', 'Test'])
 
+  def set_lt_func(self, lt_func: function) -> None:
+    self.lt_func = lt_func
+
   def __getitem__(self, key):
     return self.metric[key]
 
-  def __lt__(self, other):
+  def __lt__(self, other: MetricGroup):
     return self.lt_func(self, other)
 
   def add_group(self, group: str):
@@ -155,9 +162,9 @@ class MetricGroup():
           if name is None or n == name:
             yield self.metric[g][n]
 
-  def update(self, output, target, group: str = None):
+  def update(self, result: tuple , group: str = None):
     for metric in self.iter(group=group):
-      metric.update(output, target)
+      metric.update(result)
 
   def compute(self, group: str = None):
     for metric in self.iter(group=group):

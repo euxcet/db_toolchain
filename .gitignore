@@ -197,3 +197,8 @@ log.txt
 sound/
 
 local/
+*.pt
+*.pth
+*.onnx
+*.tflite
+runs/

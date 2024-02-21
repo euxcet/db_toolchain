@@ -37,7 +37,7 @@ class DynamicGestureTrainer(Trainer):
 
   def train_epoch(self, epoch:int):
     self._default_backward()
-    self._default_valid()
+    self._default_validate()
     if self.update_best_metric(self.metric):
       self.metric['Valid']['Confusion'].plot()
       self.save_model()
