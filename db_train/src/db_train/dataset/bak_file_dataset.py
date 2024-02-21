@@ -3,7 +3,7 @@ import os.path as osp
 from utils.file_utils import load_json
 
 class FileDataset():
-  def __init__(self, root:str, has_label=True):
+  def __init__(self, root: str, has_label: bool = True):
     self.check_dataset(root)
     self.config = load_json(self._config_path)
     if has_label:
@@ -18,7 +18,7 @@ class FileDataset():
 
   def load_from_dir(self, root:str):
     result_dict = dict()
-    users:list[str] = os.listdir(root)
+    users: list[str] = os.listdir(root)
     for user in users:
       if osp.isdir(osp.join(root, user)) and self.is_valid_user(user):
         for class_ in os.listdir(osp.join(root, user)):

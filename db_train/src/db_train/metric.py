@@ -1,8 +1,9 @@
 from __future__ import annotations
-import torch.nn.functional as F
+from typing import Any
 from abc import ABCMeta, abstractmethod
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torchmetrics.classification import Accuracy, ConfusionMatrix
 from logger import logger
 
@@ -11,7 +12,7 @@ class Metric(metaclass=ABCMeta):
     self.value = 0
 
   @abstractmethod
-  def update(self, output, target): ...
+  def update(self, output: Any, target: Any): ...
 
   @abstractmethod
   def compute(self): ...
@@ -65,7 +66,7 @@ class TrajectoryLoss(Metric):
     self.sum = 0
     self.len = 0
 
-  def __lt__(self, other:CrossEntropyLoss):
+  def __lt__(self, other: CrossEntropyLoss):
     return self.value < other.value
 
   def __str__(self):
@@ -86,7 +87,7 @@ class AccuracyMetric(Metric):
     self.metric.reset()
     self.value = 0
   
-  def __lt__(self, other:AccuracyMetric):
+  def __lt__(self, other: AccuracyMetric):
     return self.value < other.value
 
   def __str__(self):
@@ -110,7 +111,7 @@ class ConfusionMatrixMetric(Metric):
     fig, ax = self.metric.plot()
     # fig.savefig('output.png')
   
-  def __lt__(self, other:ConfusionMatrixMetric):
+  def __lt__(self, other: ConfusionMatrixMetric):
     raise NotImplementedError()
 
   def __str__(self):
@@ -120,9 +121,7 @@ class MetricGroup():
   def __init__(self, lt_func):
     self.metric:dict[str, dict[str, Metric]] = {}
     self.lt_func = lt_func
-    self.add_group('Train')
-    self.add_group('Valid')
-    self.add_group('Test')
+    self.add_groups(['Train', 'Valid', 'Test'])
 
   def __getitem__(self, key):
     return self.metric[key]
@@ -130,13 +129,17 @@ class MetricGroup():
   def __lt__(self, other):
     return self.lt_func(self, other)
 
-  def add_group(self, group:str):
+  def add_group(self, group: str):
     if group in self.metric:
       logger.error(f'Group {group} has already exist in the metric class.')
       return
     self.metric[group] = {}
 
-  def add_metric(self, group:str, name:str, metric):
+  def add_groups(self, groups: list[str]):
+    for group in groups:
+      self.add_group(group)
+
+  def add_metric(self, group: str, name: str, metric: Metric):
     if name in self.metric[group]:
       logger.error(f'Metric {metric} has already exist in the Group {group}.')
       return
@@ -145,22 +148,22 @@ class MetricGroup():
       return
     self.metric[group][name] = metric
 
-  def iter(self, group:str=None, name:str=None):
+  def iter(self, group: str = None, name: str = None):
     for g in self.metric:
       if group is None or g == group:
         for n in self.metric[group]:
           if name is None or n == name:
             yield self.metric[g][n]
 
-  def update(self, output, target, group:str=None):
+  def update(self, output, target, group: str = None):
     for metric in self.iter(group=group):
       metric.update(output, target)
 
-  def compute(self, group:str=None):
+  def compute(self, group: str = None):
     for metric in self.iter(group=group):
       metric.compute()
 
-  def reset(self, group:str=None):
+  def reset(self, group: str = None):
     for metric in self.iter(group=group):
       metric.reset()
 
