@@ -48,7 +48,6 @@ class IMUGestureDataset(HierarchicalDataset):
           lambda x: (x, self.label_id[self.label_mapping[category]]),
           slice_data(self.load_ring_data(ring_file), self.load_timestamp_data(timestamp_file))
         ))
-        break
     return self
 
   def export(self) -> None:

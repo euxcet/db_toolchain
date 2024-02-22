@@ -30,7 +30,7 @@ def load_json(path: str):
 def save_json(path: str, data: Any):
   try:
     fout = open(path, 'w')
-    json.dump(data, fout)
+    json.dump(data, fout, indent=4, sort_keys=True)
   except IOError as err:
     print("ERROR:", err)
   finally:

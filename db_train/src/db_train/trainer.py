@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 from typing import Any
 from copy import deepcopy
 from abc import ABC, abstractmethod
@@ -13,6 +14,8 @@ from torch.utils.data import Dataset, DataLoader
 from lightning.fabric import Fabric, seed_everything
 
 from .metric import MetricGroup
+from .utils.file_utils import save_json, save_string
+from .utils.logger import logger
 
 class TrainerParameter():
   def __init__(
@@ -28,6 +31,8 @@ class TrainerParameter():
       log_interval: int,
       train_ratio: float,
       valid_ratio: float,
+      run_name: str,
+      run_message: str,
   ) -> None:
     self.num_classes = num_classes
     self.batch_size = batch_size
@@ -39,20 +44,26 @@ class TrainerParameter():
     self.train_ratio = train_ratio
     self.valid_ratio = valid_ratio
     self.test_ratio = 1.0 - train_ratio - valid_ratio
+    if self.test_ratio < 1e-5:
+      self.test_ratio = 0
     self.dataset_path = dataset_path
     self.output_model_name = output_model_name
+    self.run_name = run_name
+    self.run_message = run_message
 
   @staticmethod
   def from_dict(param: dict) -> TrainerParameter:
     return TrainerParameter(**param)
 
 class Trainer(ABC):
+
+  PARAMETER_FILENAME = 'parameter.json'
+
   def __init__(
       self,
       parameter: TrainerParameter,
   ) -> None:
     self.parameter = parameter
-
 
     seed_everything(self.parameter.seed)
     self.fabric = Fabric(accelerator="auto")
@@ -74,6 +85,9 @@ class Trainer(ABC):
     self.scheduler: LRScheduler = None
     self.criterion: nn.Module = None
 
+    self.runs_folder = Path('runs/')
+    self.runs_folder.mkdir(exist_ok=True)
+
     self.prepare_dataset()
     self._check_dataset()
     self.prepare_metric()
@@ -90,7 +104,22 @@ class Trainer(ABC):
   def _check_optimizers(self):
     ...
 
+  def _make_run_dir(self):
+    run_name = self.parameter.run_name
+    if run_name == '':
+      run_name = '1'
+      for path in self.runs_folder.iterdir():
+        if path.name.isdigit() and int(path.name) + 1 > int(run_name):
+          run_name = str(int(path.name) + 1)
+    run_dir = self.runs_folder / run_name
+    if run_dir.exists():
+      logger.warning(f'Run dir f{run_dir} is already exist.')
+    run_dir.mkdir(exist_ok=True)
+    save_json(run_dir / self.PARAMETER_FILENAME, self.parameter.__dict__)
+    return run_dir
+
   def train(self):
+    self.run_dir = self._make_run_dir()
     for epoch in range(1, self.parameter.epochs + 1):
       self.training_epoch(epoch)
       if epoch % self.parameter.log_interval == 0:
@@ -131,6 +160,7 @@ class Trainer(ABC):
     if model is None:
       model = self.model
     torch.save(model.state_dict(), self.parameter.output_model_name)
+    torch.save(model.state_dict(), self.run_dir / self.parameter.output_model_name)
   
   @abstractmethod
   def prepare_dataset(self): ...
@@ -162,3 +192,5 @@ def add_argument(parser: argparse.ArgumentParser):
   parser.add_argument("--valid-ratio", type=float, default=0.2, metavar="R", help="ratio of valid dataset size")
   parser.add_argument("--log-interval", type=int, default=1, metavar="I", help="Print log every few times")
   parser.add_argument("--output-model-name", type=str, metavar="PATH", default="best.pth", help="Name of the output model")
+  parser.add_argument("--run-name", type=str, metavar="PATH", default="", help="Name of this run")
+  parser.add_argument("--run-message", type=str, metavar="STR", default="", help="Message of this run")
