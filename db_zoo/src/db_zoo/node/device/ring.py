@@ -8,6 +8,7 @@ import asyncio
 import inspect
 from enum import Enum
 from bleak import BleakClient
+from typing_extensions import override
 from db_graph.framework.graph import Graph
 from db_graph.framework.device import Device, DeviceLifeCircleEvent
 from db_graph.data.imu_data import IMUData
@@ -215,21 +216,25 @@ class Ring(Device):
     self.lifecycle_status = DeviceLifeCircleEvent.on_create
 
   # lifecycle callbacks
+  @override
   def on_pair(self) -> None:
     self.log_info(f"Pairing <{self.address}>")
     self.lifecycle_status = DeviceLifeCircleEvent.on_pair
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_pair)
 
+  @override
   def on_connect(self) -> None:
     self.log_info("Connected")
     self.lifecycle_status = DeviceLifeCircleEvent.on_connect
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_connect)
 
+  @override
   def on_disconnect(self, *args, **kwargs) -> None:
     self.log_info("Disconnected")
     self.lifecycle_status = DeviceLifeCircleEvent.on_disconnect
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_disconnect)
 
+  @override
   def on_error(self) -> None:
     self.lifecycle_status = DeviceLifeCircleEvent.on_error
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_error)
@@ -267,12 +272,15 @@ class Ring(Device):
     await self.client.disconnect()
     await self.connect()
 
+  @override
   def connect(self) -> None:
     asyncio.run(self.connect_async())
 
+  @override
   def disconnect(self) -> None:
     asyncio.run(self.disconnect_async())
 
+  @override
   def reconnect(self) -> None:
     asyncio.run(self.reconnect_async())
 

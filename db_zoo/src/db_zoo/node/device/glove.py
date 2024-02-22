@@ -4,6 +4,7 @@ import time
 import socket
 import struct
 from enum import Enum
+from typing_extensions import override
 from db_graph.framework.graph import Graph
 from db_graph.framework.device import Device, DeviceLifeCircleEvent
 from db_graph.data.quaternion_data import QuaternionData
@@ -33,11 +34,11 @@ class Glove(Device):
       self,
       name: str,
       graph: Graph,
-      input_edges: dict[str, str],
-      output_edges: dict[str, str],
-      ip: str,
-      port: int = 11002,
-      version: str = 'IMU_6AXIS',
+    input_edges: dict[str, str],
+    output_edges: dict[str, str],
+    ip: str,
+    port: int = 11002,
+    version: str = 'IMU_6AXIS',
       quiet_log: bool = False,
   ) -> None:
     super(Glove, self).__init__(
@@ -51,21 +52,25 @@ class Glove(Device):
     self.quiet_log = quiet_log
 
   # lifecycle callbacks
+  @override
   def on_pair(self) -> None:
     self.log_info('Connecting to %s:%s.' % self.address)
     self.lifecycle_status = DeviceLifeCircleEvent.on_pair
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_pair)
 
+  @override
   def on_connect(self) -> None:
     self.log_info("Connected")
     self.lifecycle_status = DeviceLifeCircleEvent.on_connect
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_connect)
 
+  @override
   def on_disconnect(self) -> None:
     self.log_info("Disconnected")
     self.lifecycle_status = DeviceLifeCircleEvent.on_disconnect
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_disconnect)
 
+  @override
   def on_error(self) -> None:
     self.lifecycle_status = DeviceLifeCircleEvent.on_error
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_error)
@@ -93,6 +98,7 @@ class Glove(Device):
         self.output(self.OUTPUT_EDGE_QUATERNION, GloveData(joint_quaternions=joint_quaternions).get_quaternion_data_numpy())
       self.output(self.OUTPUT_EDGE_STATUS, (radioStrength, battery, calScore))
   
+  @override
   def connect(self) -> None:
     self.on_pair()
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -102,6 +108,8 @@ class Glove(Device):
       data = self.socket.recv(581 if self.version == GloveVersion.IMU_6AXIS_QUATERNION else 1024)
       self.parse_data(data)
 
+  @override
   def disconnect(self) -> None: ...
 
+  @override
   def reconnect(self) -> None: ...
