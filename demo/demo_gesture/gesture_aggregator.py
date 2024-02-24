@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from typing_extensions import override
 from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 
@@ -23,6 +24,10 @@ class GestureAggregator(Node):
       output_edges=output_edges,
     )
     self.gestures = [self.Gesture(**gesture_config) for gesture_config in gestures]
+
+  @override
+  def start(self):
+    ...
 
   def handle_input_edge_event(self, event: str, timestamp: float) -> None:
     for gesture in self.gestures:

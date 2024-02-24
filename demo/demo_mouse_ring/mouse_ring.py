@@ -1,4 +1,5 @@
 import numpy as np
+from typing_extensions import override
 from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 
@@ -34,6 +35,10 @@ class MouseRing(Node):
     if control_cursor:
       from pynput.mouse import Controller
       self.mouse = Controller()
+
+  @override
+  def start(self):
+    ...
 
   def handle_input_edge_touch_state(self, data:str, timestamp:float) -> None:
     if self.control_cursor:
