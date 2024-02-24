@@ -34,6 +34,10 @@ class Node(ABC):
       self.output_edge[local_key] = self.graph.edge_manager.add_edge(Edge(edge_name))
     self.counter = Counter()
 
+  @abstractmethod
+  def start(self) -> None:
+    ...
+
   def output(self, edge_name:str, data:Any) -> None:
     self.output_edge[edge_name].put(data)
 

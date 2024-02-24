@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from .node_manager import NodeManager
 from .edge_manager import EdgeManager
 
@@ -9,3 +10,7 @@ class Graph():
 
   def run(self):
     self.node_manager.start()
+
+  @property
+  def executor(self) -> ThreadPoolExecutor:
+    return self.node_manager.executor

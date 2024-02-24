@@ -2,6 +2,7 @@ from __future__ import annotations
 from ...utils.version import check_library_version
 check_library_version('torch', '2.0.1')
 from typing import Any
+from typing_extensions import override
 import torch
 import torch.nn as nn
 from db_graph.framework.graph import Graph
@@ -30,3 +31,7 @@ class TorchNode(Node):
       self.model: nn.Module = model
       self.model.load_state_dict(torch.load(checkpoint_file, map_location=self.device))
       self.model.eval()
+
+  @override
+  def start(self):
+    ...

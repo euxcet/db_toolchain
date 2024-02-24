@@ -1,6 +1,6 @@
-import queue
 from enum import Enum
 from typing import Any
+from typing_extensions import override
 from abc import ABCMeta, abstractmethod
 from .node import Node
 
@@ -25,6 +25,10 @@ class Device(Node, metaclass=ABCMeta):
       input_edges=input_edges,
       output_edges=output_edges
     )
+
+  @override
+  def start(self):
+    self.graph.executor.submit(self.connect)
 
   # lifecycle callbacks
   @abstractmethod

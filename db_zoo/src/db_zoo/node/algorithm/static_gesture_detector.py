@@ -16,8 +16,8 @@ class StaticGestureDetector(TorchNode):
       self,
       name: str,
       graph: Graph,
-      input_streams: dict[str, str],
-      output_streams: dict[str, str],
+      input_edges: dict[str, str],
+      output_edges: dict[str, str],
       num_classes: int,
       execute_interval: int,
       result_window_length: int,
@@ -29,8 +29,8 @@ class StaticGestureDetector(TorchNode):
     super(StaticGestureDetector, self).__init__(
       name=name,
       graph=graph,
-      input_streams=input_streams,
-      output_streams=output_streams,
+      input_edges=input_edges,
+      output_edges=output_edges,
       model=FullyConnectedModel(num_classes=num_classes),
       checkpoint_file=checkpoint_file
     )
@@ -45,7 +45,7 @@ class StaticGestureDetector(TorchNode):
     self.counter.print_interval = 1000
     self.counter.execute_interval = execute_interval
     
-  def handle_input_stream_quaternion(self, data:np.ndarray, timestamp:float) -> None:
+  def handle_input_edge_quaternion(self, data: np.ndarray, timestamp: float) -> None:
     if self.counter.count(enable_print=False, print_fps=True):
       current_time = time.time()
       input_tensor = torch.tensor(data.astype(np.float32)).reshape(1, 64).to(self.device)

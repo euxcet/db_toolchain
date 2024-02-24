@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import time
 from queue import Queue
-from threading import Thread
 from typing import TypeVar, Generic, Any, Callable
 
 T = TypeVar('T')

@@ -43,7 +43,7 @@ class TrajectoryDetector(TorchNode):
     self.last_unstable_move = Window(30)
     self.counter.execute_interval = execute_interval
 
-  def handle_input_edge_imu(self, data:IMUData, timestamp:float) -> None:
+  def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
     self.imu_window.push(data)
     if self.counter.count() and self.imu_window.full() and self.touching:
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().reshape(1, self.imu_window_length, 6)).to(self.device)
@@ -57,7 +57,7 @@ class TrajectoryDetector(TorchNode):
       self.last_unstable_move.push(move)
       self.output(self.OUTPUT_EDGE_RESULT, move)
 
-  def handle_input_edge_touch_state(self, data:str, timestamp:float) -> None:
+  def handle_input_edge_touch_state(self, data: str, timestamp: float) -> None:
     if data == 'touch_down':
       self.touching = True
     elif data in ['touch_up', 'click', 'double_click']:
