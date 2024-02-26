@@ -1,0 +1,35 @@
+{
+  "nodes": [
+    {
+      "type": "MockRing",
+      "name": "MockRing",
+      "input_edges": {
+      },
+      "output_edges": {
+        "data": "DATA"
+      },
+      "data_freq": 200,
+      "send_freq": 33
+    },
+    {
+      "type": "SmoothFlow",
+      "name": "SmoothFlow",
+      "input_edges": {
+        "in_data": "MockRing_DATA"
+      },
+      "output_edges": {
+        "out_data": "DATA"
+      }
+    },
+    {
+      "type": "Printer",
+      "name": "Printer",
+      "input_edges": {
+        "in_data": "SmoothFlow_DATA"
+      },
+      "output_edges": {
+        "out_data": "OUT_DATA"
+      }
+    }
+  ]
+}

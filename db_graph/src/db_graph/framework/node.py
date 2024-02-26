@@ -52,7 +52,11 @@ class Node(ABC):
   def _complete_edge_names(self, names: dict[str, str], prefix: str) -> dict[str, str]:
     for variable in dir(self):
       if variable.startswith(prefix):
-        names[getattr(self, variable)] = self._default_stream_name(getattr(self, variable))
+        name = getattr(self, variable)
+        if name in names:
+          names[name] = self._default_stream_name(names[name])
+        else:
+          names[getattr(self, variable)] = self._default_stream_name(getattr(self, variable))
     return names
 
   def _complete_output_edge_names(self, names: dict[str, str]) -> dict[str, str]:

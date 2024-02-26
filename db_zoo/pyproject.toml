@@ -8,8 +8,10 @@ authors = [
 dependencies = [
     "packaging>=23.2",
     "importlib-metadata>=7.0.1",
+    "db-graph @ file:///${PROJECT_ROOT}/../db_graph/dist/db_graph-0.1.0-py3-none-any.whl",
+    "typing-extensions>=4.10.0",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
