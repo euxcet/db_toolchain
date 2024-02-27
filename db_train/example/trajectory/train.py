@@ -61,21 +61,6 @@ class TrajectoryTrainer(Trainer):
     if self.update_metric():
       self.save_model()
 
-    # self.model.train()
-    # self.metric.reset(group='Train')
-    # for batch_id, (data, target) in enumerate(self.train_loader):
-    #   self.optimizer.zero_grad()
-    #   output = self.model(data)
-    #   loss = self.criterion(output, target)
-    #   self.metric.update(output, target, group='Train')
-    #   self.fabric.backward(loss)
-    #   self.optimizer.step()
-    # self.metric.compute(group='Train')
-    # self.scheduler.step(self.metric['Train']['Loss'].value)
-    # self._default_valid()
-    # if self.update_best_metric(self.metric):
-    #   self.save_model()
-
   @override
   def log_epoch(self, epoch: int) -> None:
     print(f'Epoch: {epoch}\n{self.metric}\n')
@@ -86,4 +71,3 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   TrajectoryTrainer(TrainerParameter.from_dict(vars(args))).train()
-  # python train_imu_trajectory.py --dataset-path=./local_dataset/trajectory/ringboard_dataset --batch-size=32 --lr=0.003
