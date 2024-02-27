@@ -10,11 +10,6 @@ from db_train.data.imu_data import IMUData
 from db_train.utils.data_utils import slice_data
 from typing_extensions import override
 
-"""
-  data: tuple(imu_data, label)
-  imu_data: np.ndarray, shape (200, 6)
-  label: int
-"""
 class IMUTrajectoryDataset(HierarchicalDataset):
   def __init__(
       self,
