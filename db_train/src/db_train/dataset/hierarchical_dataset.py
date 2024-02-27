@@ -15,9 +15,10 @@ class HierarchicalDataset(BaseDataset, ABC):
   def __init__(
       self,
       root: Path,
+      mode: str = 'list',
       augmentor: Augmentor = None,
   ) -> None:
-    super(HierarchicalDataset, self).__init__()
+    super(HierarchicalDataset, self).__init__(mode=mode)
     self.root = root
     self.file_loader = FileLoader(self.root)
     self.augmentor = augmentor
@@ -29,9 +30,3 @@ class HierarchicalDataset(BaseDataset, ABC):
   
   def augment(self) -> None:
     pass
-
-  def __len__(self):
-    return len(self.data)
-
-  def __getitem__(self, index: int):
-    return self.data[index]

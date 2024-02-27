@@ -96,13 +96,21 @@ class Trainer(ABC):
     self._check_optimizers()
 
   def _check_dataset(self):
-    ...
+    assert self.dataset is not None
+    assert self.train_dataset is not None
+    assert self.valid_dataset is not None
+    assert self.train_loader is not None
+    assert self.valid_loader is not None
+    print(f'Size of the dataset: {len(self.dataset)}')
 
   def _check_metric(self):
-    ...
+    assert self.metric is not None
 
   def _check_optimizers(self):
-    ...
+    assert self.model is not None
+    assert self.optimizer is not None
+    assert self.scheduler is not None
+    assert self.criterion is not None
 
   def _make_run_dir(self):
     run_name = self.parameter.run_name
@@ -125,7 +133,7 @@ class Trainer(ABC):
       if epoch % self.parameter.log_interval == 0:
         self.log_epoch(epoch)
 
-  def backward(self, training_step_func: function = None):
+  def backward(self, training_step_func: function = None, step_scheduler: bool = True):
     self.model.train()
     self.metric.reset(group='Train')
     for batch in self.train_loader:
@@ -138,7 +146,8 @@ class Trainer(ABC):
       self.fabric.backward(loss)
       self.optimizer.step()
     self.metric.compute(group='Train')
-    self.scheduler.step()
+    if step_scheduler:
+      self.scheduler.step()
 
   def validate(self):
     self.model.eval()
