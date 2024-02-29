@@ -63,6 +63,8 @@ class TrajectoryTrainer(Trainer):
 
   @override
   def log_epoch(self, epoch: int) -> None:
+    if self.wandb_logger:
+      self.fabric.log_dict(self.metric.to_dict(), step=epoch)
     print(f'Epoch: {epoch}\n{self.metric}\n')
 
 if __name__ == '__main__':

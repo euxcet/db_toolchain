@@ -13,6 +13,8 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import Dataset, DataLoader
 from lightning.fabric import Fabric, seed_everything
 
+from wandb.integration.lightning.fabric import WandbLogger
+
 from .metric import MetricGroup
 from .utils.file_utils import save_json, save_string
 from .utils.logger import logger
@@ -33,6 +35,8 @@ class TrainerParameter():
       valid_ratio: float,
       run_name: str,
       run_message: str,
+      use_wandb: bool,
+      gpu: str,
   ) -> None:
     self.num_classes = num_classes
     self.batch_size = batch_size
@@ -50,6 +54,8 @@ class TrainerParameter():
     self.output_model_name = output_model_name
     self.run_name = run_name
     self.run_message = run_message
+    self.use_wandb = use_wandb
+    self.gpu = [int(i) for i in gpu.split(',')]
 
   @staticmethod
   def from_dict(param: dict) -> TrainerParameter:
@@ -65,8 +71,16 @@ class Trainer(ABC):
   ) -> None:
     self.parameter = parameter
 
+    # wandb logger
+    if self.parameter.use_wandb:
+      self.wandb_logger = WandbLogger(log_model="all", project="db_train", name=self.parameter.run_name, tags=["train"])
+      self.wandb_logger.log_hyperparams(self.parameter.__dict__)
+    else:
+      self.wandb_logger = None
+
     seed_everything(self.parameter.seed)
-    self.fabric = Fabric(accelerator="auto")
+    self.fabric = Fabric(accelerator="auto", loggers=[self.wandb_logger] if self.parameter.use_wandb else None, devices=self.parameter.gpu)
+    self.fabric.launch()
 
     # dataset
     self.dataset: Dataset = None
@@ -203,3 +217,5 @@ def add_argument(parser: argparse.ArgumentParser):
   parser.add_argument("--output-model-name", type=str, metavar="PATH", default="best.pth", help="Name of the output model")
   parser.add_argument("--run-name", type=str, metavar="PATH", default="", help="Name of this run")
   parser.add_argument("--run-message", type=str, metavar="STR", default="", help="Message of this run")
+  parser.add_argument("--use-wandb", action='store_true', default=False, help="Use wandb for logging")
+  parser.add_argument("--gpu", type=str, default="0", help="gpu id to use, split by comma (default: 0)")

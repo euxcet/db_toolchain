@@ -135,9 +135,10 @@ class ConfusionMatrixMetric(Metric):
     return "<Not Displayed>"
 
 class MetricGroup():
-  def __init__(self, lt_func: function = lambda x, other: x['Valid']['Accuracy'] < other['Valid']['Accuracy']) -> None:
+  def __init__(self, lt_func: function = lambda x, other: x['Valid']['Accuracy'] < other['Valid']['Accuracy'], wandb_logger=None) -> None:
     self.metric:dict[str, dict[str, Metric]] = {}
     self.lt_func = lt_func
+    self.wandb_logger = wandb_logger
     self.add_groups(['Train', 'Valid', 'Test'])
 
   def set_lt_func(self, lt_func: function) -> None:
@@ -161,7 +162,7 @@ class MetricGroup():
 
   def add_metric(self, group: str, name: str, metric: Metric):
     if name in self.metric[group]:
-      logger.error(f'Metric {metric} has already exist in the Group {group}.')
+      logger.error(f'Metric {name} has already exist in the Group {group}.')
       return
     if group not in self.metric:
       logger.error(f'Group {group} not found in the metric class.')
@@ -187,8 +188,16 @@ class MetricGroup():
     for metric in self.iter(group=group):
       metric.reset()
 
+  def log_to_wandb(self, step: int, group: str = 'Valid'):
+    if self.wandb_logger is not None:
+      for metric in self.iter(group=group):
+        self.wandb_logger.log({f'{group}/{metric}': metric.value}, step=step)
+
   def __str__(self):
     return '\n'.join([
       g + '\t' + '  '.join(n + ' ' + str(self.metric[g][n]) for n in self.metric[g])
         for g in filter(lambda x: len(self.metric[x]) > 0, self.metric)
     ])
+
+  def to_dict(self):
+    return {f"{g}/{n}": self.metric[g][n].value for g in filter(lambda x: len(self.metric[x]) > 0, self.metric) for n in self.metric[g]}
