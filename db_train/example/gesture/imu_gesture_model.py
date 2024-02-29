@@ -1,5 +1,4 @@
 import torch.nn as nn
-from einops import rearrange
 
 # TODO: upgrade model
 
@@ -151,7 +150,6 @@ class GestureNetCNN(nn.Module):
     self.linear3 = nn.Linear(40, num_classes)
 
   def forward(self, x):
-    x = rearrange(x, 'b l c -> b c 1 l')
     out = self.conv1(x)
     out = self.conv2(out)
     out = self.conv3(out)

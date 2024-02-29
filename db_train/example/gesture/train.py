@@ -8,6 +8,7 @@ from db_train.trainer import Trainer, TrainerParameter, add_argument
 from db_train.metric import MetricGroup, CrossEntropyLoss, AccuracyMetric, ConfusionMatrixMetric
 from imu_gesture_model import GestureNetCNN
 from imu_gesture_dataset import IMUGestureDataset
+from einops import rearrange
 
 class DynamicGestureTrainer(Trainer):
   def __init__(self, parameter: TrainerParameter):
@@ -37,6 +38,11 @@ class DynamicGestureTrainer(Trainer):
     self.model, self.optimizer = self.fabric.setup(self.model, self.optimizer)
     self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[5, 8], gamma=self.parameter.gamma)
     self.criterion = nn.CrossEntropyLoss()
+
+  @override
+  def before_forward_process(self, batch: tuple) -> tuple:
+    data, target = batch
+    return rearrange(data, 'b l c -> b c 1 l'), target
 
   @override
   def training_step(self, batch: tuple) -> Tensor:
