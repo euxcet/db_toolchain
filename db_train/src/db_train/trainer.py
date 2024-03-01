@@ -151,6 +151,7 @@ class Trainer(ABC):
     self.model.train()
     self.metric.reset(group='Train')
     for batch in self.train_loader:
+      batch = self.before_forward_process(batch)
       if training_step_func is None:
         loss, result = self.training_step(batch)
       else:
@@ -167,9 +168,10 @@ class Trainer(ABC):
     self.model.eval()
     self.metric.reset(group='Valid')
     with torch.no_grad():
-      for data, target in self.valid_loader:
-        output = self.model(data)
-        self.metric.update((output, target), group='Valid')
+      for batch in self.valid_loader:
+        batch = self.before_forward_process(batch)
+        output = self.model(batch[0])
+        self.metric.update((output, batch[1]), group='Valid')
     self.metric.compute(group='Valid')
 
   def update_metric(self, metric: MetricGroup = None) -> bool:
@@ -184,6 +186,9 @@ class Trainer(ABC):
       model = self.model
     torch.save(model.state_dict(), self.parameter.output_model_name)
     torch.save(model.state_dict(), self.run_dir / self.parameter.output_model_name)
+
+  def before_forward_process(self, data):
+    return data
   
   @abstractmethod
   def prepare_dataset(self): ...
