@@ -7,9 +7,8 @@ import random
 from config_train import cfg
 
 MOVEMENTS_STUDY1 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]
-percentage = 0.5  # the ratio that judgment action
 alpha = 1.7  # dynamic threshold
-beta = 0.5  # the ratio that judgment action
+beta = 0.8  # the ratio that judgment action
 frame_rate = 10  # the frame rate of the data # unused
 dt = 10  # the time interval of the standard data
 liftFileNum = 4
@@ -182,6 +181,10 @@ def make_dataset(leave_one_out=True, test_ratio=0.2):
         test_x = np.concatenate(test_x, axis=0)
         test_y = np.concatenate(test_y, axis=0)
 
+        # transpose to b l c
+        train_x = train_x.transpose(0, 2, 1)
+        test_x = test_x.transpose(0, 2, 1)
+
         # save
         np.save(os.path.join(cfg.get('dataset_path'), 'train_x.npy'), train_x)
         np.save(os.path.join(cfg.get('dataset_path'), 'train_y.npy'), train_y)
@@ -213,6 +216,10 @@ def make_dataset(leave_one_out=True, test_ratio=0.2):
         test_y = y[:test_num]
         train_x = x[test_num:]
         train_y = y[test_num:]
+
+        # transpose to b l c
+        train_x = train_x.transpose(0, 2, 1)
+        test_x = test_x.transpose(0, 2, 1)
 
         # save
         np.save(os.path.join(cfg.get('dataset_path'), 'train_x.npy'), train_x)
