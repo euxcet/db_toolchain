@@ -83,3 +83,6 @@ class Window(Generic[_T]):
   def pad(self):
     self.window += self.window[-1:] * (self.window_length - len(self.window))
     return self
+
+  def __len__(self) -> int:
+    return len(self.window)
