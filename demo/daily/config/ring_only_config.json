@@ -1,0 +1,21 @@
+{
+  "devices": [
+    {
+      "type": "Ring",
+      "name": "Ring",
+      "address": "0D85597D-C82C-E839-E0E0-4776246A6398"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "DailyRecorder",
+      "name": "DailyRecorder",
+      "input_edges": {
+        "imu": "Ring_imu"
+      },
+      "output_edges": {
+      },
+      "user": "user"
+    }
+  ]
+}
