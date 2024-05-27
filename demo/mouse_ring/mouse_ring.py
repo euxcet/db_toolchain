@@ -5,7 +5,7 @@ from db_graph.framework.node import Node
 
 class MouseRing(Node):
 
-  INPUT_EDGE_touch_state = 'touch_state'
+  INPUT_EDGE_TOUCH_STATE = 'touch_state'
   INPUT_EDGE_TRAJECTORY = 'trajectory'
   OUTPUT_EDGE_RESULT = 'result'
 

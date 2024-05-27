@@ -73,7 +73,7 @@ class Receiver(Node):
       wavfile = wave.open('result.wav', 'wb')
       wavfile.setnchannels(1)
       wavfile.setsampwidth(2)
-      wavfile.setframerate(16000)
+      wavfile.setframerate(8000)
       wavfile.writeframes(self.audio)
       wavfile.close()
     except Exception as e:
