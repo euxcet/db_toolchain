@@ -125,20 +125,8 @@ class RingV2(Device):
       self.log_info("Start notify")
       await self.client.start_notify(NotifyProtocol.READ_CHARACTERISTIC, self.notify_callback)
       await asyncio.sleep(1)
-
-      # self.audio = bytearray()
-      # await self.write(NotifyProtocol.GET_SOFTWARE_VERSION)
-      # await self.write(NotifyProtocol.GET_HARDWARE_VERSION)
-
-      # try:
-      #   wavfile = wave.open('1.wav', 'wb')
-      #   wavfile.setnchannels(1)
-      #   wavfile.setsampwidth(2)
-      #   wavfile.setframerate(16000)
-      #   wavfile.writeframes(self.audio)
-      #   wavfile.close()
-      # except Exception as e:
-      #   print(e)
+      await self.write(NotifyProtocol.GET_SOFTWARE_VERSION)
+      await self.write(NotifyProtocol.GET_HARDWARE_VERSION)
 
       while True:
         await self._perform_action()
@@ -166,13 +154,17 @@ class RingV2(Device):
   def notify_callback(self, sender, data:bytearray) -> None:
     if data[2] == 0x10 and data[3] == 0x0:
       print(data[4])
+    if data[2] == 0x11 and data[3] == 0x0:
+      print('Software version:', data[4:])
+    if data[2] == 0x11 and data[3] == 0x1:
+      print('Hardware version:', data[4:])
     elif data[2] == 0x12 and data[3] == 0x0:
       self.output(self.OUTPUT_EDGE_BATTERY, (0, data[4]))
     elif data[2] == 0x12 and data[3] == 0x1:
       self.output(self.OUTPUT_EDGE_BATTERY, (1, data[4]))
     elif data[2] == 0x40 and data[3] == 0x06:
       for index in range(5, len(data), 12):
-        acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z = struct.unpack('hhhhhh', data[index:index+12])
+        acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z = struct.unpack('<hhhhhh', data[index:index+12])
         acc_x, acc_y, acc_z = acc_x / 1000 * 9.8, acc_y / 1000 * 9.8, acc_z / 1000 * 9.8
         gyr_x, gyr_y, gyr_z = gyr_x / 180 * math.pi,  gyr_y / 180 * math.pi, gyr_z / 180 * math.pi
         self.output(self.OUTPUT_EDGE_IMU, IMUData(
