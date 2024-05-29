@@ -59,6 +59,15 @@ pdm config pypi.url https://pypi.tuna.tsinghua.edu.cn/simple/
 pip install --force-reinstall dist/db_message-*-py3-none-any.whl
 ```
 
+如果需要做开发，建议使用编辑模式来导入项目：
+
+```bash
+# pip
+pip install -e PATH_TO_THIS_FOLDER
+# pdm
+pdm add --dev -e PATH_TO_THIS_FOLDER
+```
+
 **请不要将包提交到公开pypi server**，后续会更新到私有pypi server。
 
 ## 使用
