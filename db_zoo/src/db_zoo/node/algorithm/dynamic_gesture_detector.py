@@ -75,7 +75,7 @@ class DynamicGestureDetector(TorchNode):
     
   def handle_input_edge_imu(self, data:IMUData, timestamp:float) -> None:
     self.imu_window.push(data.to_numpy())
-    if self.counter.count(enable_print=True, print_fps=True) and self.imu_window.full():
+    if self.counter.count(enable_print=False, print_fps=True) and self.imu_window.full():
       current_time = time.time()
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().T
                                   .reshape(1, 6, 1, self.imu_window_length)).to(self.device)

@@ -8,6 +8,10 @@ class Counter():
     self.execute_interval = execute_interval
     self.print_interval = print_interval
 
+  def reset(self):
+    self.st = 0
+    self.counter = 0
+
   def count(self, print_dict:dict=dict(), enable_print=False, print_fps=True) -> bool:
     current_time = time.time()
     self.st = current_time if self.st == 0 else self.st
