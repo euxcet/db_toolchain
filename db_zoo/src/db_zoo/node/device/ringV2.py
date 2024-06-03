@@ -127,6 +127,7 @@ class RingV2(Device):
       await asyncio.sleep(1)
       await self.write(NotifyProtocol.GET_SOFTWARE_VERSION)
       await self.write(NotifyProtocol.GET_HARDWARE_VERSION)
+      await self.write(NotifyProtocol.OPEN_6AXIS_IMU)
 
       while True:
         await self._perform_action()
@@ -175,13 +176,28 @@ class RingV2(Device):
     elif data[2] == 0x61 and data[3] == 0x0:
       self.output(self.OUTPUT_EDGE_TOUCH, data[4])
     elif data[2] == 0x61 and data[3] == 0x1:
-      self.output(self.OUTPUT_EDGE_TOUCH_RAW, data[4:])
+      self._detect_touch_events(data[5:])
+      self.output(self.OUTPUT_EDGE_TOUCH_RAW, (data[4], data[5:]))
     elif data[2] == 0x71 and data[3] == 0x0:
       length, seq = struct.unpack('<hi', data[4:10])
       self.output(self.OUTPUT_EDGE_MIC, (length, seq, data[10:]))
 
   def handle_input_edge_action(self, data: RingV2Action, timestamp: float) -> None:
     self.action_queue.put(data)
+
+  def _detect_touch_events(self, data: bytearray) -> None:
+    if data[2] & 0x01:
+      self.output(self.OUTPUT_EDGE_TOUCH, "tap")
+    elif data[2] & 0x02:
+      self.output(self.OUTPUT_EDGE_TOUCH, "swipe_positive")
+    elif data[2] & 0x04:
+      self.output(self.OUTPUT_EDGE_TOUCH, "swipe_negative")
+    elif data[2] & 0x08:
+      self.output(self.OUTPUT_EDGE_TOUCH, "flick_positive")
+    elif data[2] & 0x10:
+      self.output(self.OUTPUT_EDGE_TOUCH, "flick_negative")
+    elif data[2] & 0x20:
+      self.output(self.OUTPUT_EDGE_TOUCH, "hold")
 
   async def _perform_action(self) -> None:
     while not self.action_queue.empty():

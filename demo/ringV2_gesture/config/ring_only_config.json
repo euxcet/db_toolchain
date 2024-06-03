@@ -1,9 +1,9 @@
 {
   "devices": [
     {
-      "type": "Ring",
-      "name": "Ring",
-      "address": "0D85597D-C82C-E839-E0E0-4776246A6398"
+      "type": "RingV2",
+      "name": "RingV2",
+      "address": "F1E6125A-A60D-F925-5E73-0F1845082C36"
     }
   ],
   "detectors": [
@@ -11,7 +11,7 @@
       "type": "DynamicGestureDetector",
       "name": "DynamicGestureDetector",
       "input_edges": {
-        "imu": "Ring_imu"
+        "imu": "RingV2_imu"
       },
       "output_edges": {
         "result": "result"
