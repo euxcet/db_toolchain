@@ -182,7 +182,7 @@ class RingV2(Device):
       length, seq = struct.unpack('<hi', data[4:10])
       self.output(self.OUTPUT_EDGE_MIC, (length, seq, data[10:]))
 
-  def handle_input_edge_action(self, data: RingV2Action, timestamp: float) -> None:
+  def handle_input_edge_action(self, data: RingV2Action|bytearray, timestamp: float) -> None:
     self.action_queue.put(data)
 
   def _detect_touch_events(self, data: bytearray) -> None:
@@ -202,17 +202,20 @@ class RingV2(Device):
   async def _perform_action(self) -> None:
     while not self.action_queue.empty():
       action = self.action_queue.get()
-      if action == RingV2Action.DISCONNECT:
-        self.disconnect()
-      elif action == RingV2Action.RECONNECT:
-        self.reconnect()
-      elif action == RingV2Action.GET_BATTERY_LEVEL:
-        await self.write(NotifyProtocol.GET_BATTERY_LEVEL)
-      elif action == RingV2Action.OPEN_MIC:
-        await self.write(NotifyProtocol.OPEN_MIC)
-      elif action == RingV2Action.CLOSE_MIC:
-        await self.write(NotifyProtocol.CLOSE_MIC)
-      elif action == RingV2Action.OPEN_IMU:
-        await self.write(NotifyProtocol.OPEN_6AXIS_IMU)
-      elif action == RingV2Action.CLOSE_IMU:
-        await self.write(NotifyProtocol.CLOSE_6AXIS_IMU)
+      if type(action) is bytearray:
+        self.write(action)
+      elif type(action) is RingV2Action:
+        if action == RingV2Action.DISCONNECT:
+          self.disconnect()
+        elif action == RingV2Action.RECONNECT:
+          self.reconnect()
+        elif action == RingV2Action.GET_BATTERY_LEVEL:
+          await self.write(NotifyProtocol.GET_BATTERY_LEVEL)
+        elif action == RingV2Action.OPEN_MIC:
+          await self.write(NotifyProtocol.OPEN_MIC)
+        elif action == RingV2Action.CLOSE_MIC:
+          await self.write(NotifyProtocol.CLOSE_MIC)
+        elif action == RingV2Action.OPEN_IMU:
+          await self.write(NotifyProtocol.OPEN_6AXIS_IMU)
+        elif action == RingV2Action.CLOSE_IMU:
+          await self.write(NotifyProtocol.CLOSE_6AXIS_IMU)
