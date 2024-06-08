@@ -153,6 +153,14 @@ class RingV2(Device):
     asyncio.run(self.reconnect_async())
 
   def notify_callback(self, sender, data:bytearray) -> None:
+    if data[2] == 0x62 and data[3] == 0x1:
+      print('呼吸灯结果')
+    if data[2] == 0x62 and data[3] == 0x2:
+      print('自定义灯结果')
+    if data[2] == 0x62 and data[3] == 0x3:
+      print('自定义灯pwm空闲结果')
+
+
     if data[2] == 0x10 and data[3] == 0x0:
       print(data[4])
     if data[2] == 0x11 and data[3] == 0x0:
@@ -186,6 +194,11 @@ class RingV2(Device):
     self.action_queue.put(data)
 
   def _detect_touch_events(self, data: bytearray) -> None:
+    status = " touch status:"
+    status += f"  {1 if data[1] & 0x02 else 0}   "
+    status += f"  {1 if data[1] & 0x08 else 0}   "
+    status += f"  {1 if data[1] & 0x20 else 0}   "
+    self.output(self.OUTPUT_EDGE_TOUCH, status)
     if data[2] & 0x01:
       self.output(self.OUTPUT_EDGE_TOUCH, "tap")
     elif data[2] & 0x02:
@@ -203,7 +216,7 @@ class RingV2(Device):
     while not self.action_queue.empty():
       action = self.action_queue.get()
       if type(action) is bytearray:
-        self.write(action)
+        await self.write(action)
       elif type(action) is RingV2Action:
         if action == RingV2Action.DISCONNECT:
           self.disconnect()

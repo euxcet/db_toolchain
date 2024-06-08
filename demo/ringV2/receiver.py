@@ -9,6 +9,7 @@ from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 from db_graph.data.imu_data import IMUData
 from db_zoo.node.device.ringV2 import RingV2Action
+import struct
 
 class Receiver(Node):
 
@@ -76,6 +77,40 @@ class Receiver(Node):
       self.first_battery_time = 0
     elif key == 'b':
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.GET_BATTERY_LEVEL)
+    elif key == 'a':
+      waveData = [100, 3000, 8000, 10000, 10000,8000, 3000, 100]
+      def splitWaveData(data):
+        package_size = 200
+        packages = []
+        total_packages = (len(data) + package_size - 1) // package_size  # 计算总包数量
+        for i in range(0, len(data), package_size):
+            package_data = data[i:i+package_size]
+            package_no = i // package_size
+            package_length = len(package_data)
+            package = struct.pack('<BBB', total_packages, package_no, package_length)
+            package += struct.pack(f'<{package_length}H', *package_data)
+            packages.append(package)
+        assert(len(packages) == total_packages)
+        return packages
+      for package in splitWaveData(waveData):
+        data = bytearray([0x0, 0x0, 0x62, 0x2])
+        data += bytearray([0x1, 0x1, 0x0]) #蓝红绿 三个颜色
+        data += struct.pack('<H', 10000)
+        data += struct.pack('<I', 20)#周期重复次数
+        data += struct.pack('<H', 3)#播放次数
+        data += struct.pack('<B', 1)#1单次 2循环
+        data += package
+        self.output(self.OUTPUT_EDGE_ACTION, bytearray(data))
+    elif key == 's': #呼吸灯
+        data = bytearray([0x0, 0x0, 0x62, 0x1])
+        data += bytearray([0x0, 0x0, 0x1]) #蓝红绿 三个颜色
+        data += struct.pack('<H', 10000)
+        data += struct.pack('<I', 1)#周期重复次数
+        data += struct.pack('<H', 3)#播放次数
+        data += struct.pack('<B', 1)#1单次 2循环
+        data += struct.pack('<B', 100)#序列长度
+        data += struct.pack('<B', 2)#1单向 2双向
+        self.output(self.OUTPUT_EDGE_ACTION, bytearray(data))
 
   def handle_input_edge_battery(self, data: float, timestamp: float) -> None:
     if data[0] == 0:
