@@ -37,9 +37,9 @@ class Receiver(Node):
     self.imu_counter.print_interval = 400
     self.mic_counter = Counter()
     self.mic_counter.print_interval = 100
-    self.running = False
     self.first_battery_time = 0
     self.first_battery = 0
+    self.focus = True
 
   @override
   def start(self):
@@ -56,6 +56,10 @@ class Receiver(Node):
       key = key.char
     except:
       key = key.name
+    if key == 'f1':
+      self.focus = not self.focus
+    if not self.focus:
+      return
     if key == 'i':
       print('\nStart IMU')
       self.imu_counter.reset()
@@ -78,39 +82,29 @@ class Receiver(Node):
     elif key == 'b':
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.GET_BATTERY_LEVEL)
     elif key == 'a':
-      waveData = [100, 3000, 8000, 10000, 10000,8000, 3000, 100]
-      def splitWaveData(data):
-        package_size = 200
-        packages = []
-        total_packages = (len(data) + package_size - 1) // package_size  # 计算总包数量
-        for i in range(0, len(data), package_size):
-            package_data = data[i:i+package_size]
-            package_no = i // package_size
-            package_length = len(package_data)
-            package = struct.pack('<BBB', total_packages, package_no, package_length)
-            package += struct.pack(f'<{package_length}H', *package_data)
-            packages.append(package)
-        assert(len(packages) == total_packages)
-        return packages
-      for package in splitWaveData(waveData):
-        data = bytearray([0x0, 0x0, 0x62, 0x2])
-        data += bytearray([0x1, 0x1, 0x0]) #蓝红绿 三个颜色
-        data += struct.pack('<H', 10000)
-        data += struct.pack('<I', 20)#周期重复次数
-        data += struct.pack('<H', 3)#播放次数
-        data += struct.pack('<B', 1)#1单次 2循环
-        data += package
-        self.output(self.OUTPUT_EDGE_ACTION, bytearray(data))
+      for data in RingV2Action.set_led_nonlinear(
+        wave = [100, 3000, 8000, 10000, 10000, 8000, 3000, 100],
+        red = True,
+        green = False,
+        blue = True,
+        pwd_max = 10000,
+        num_repeat = 20,
+        num_play = 3,
+        play_flag = 1,
+      ):
+        self.output(self.OUTPUT_EDGE_ACTION, data)
     elif key == 's': #呼吸灯
-        data = bytearray([0x0, 0x0, 0x62, 0x1])
-        data += bytearray([0x0, 0x0, 0x1]) #蓝红绿 三个颜色
-        data += struct.pack('<H', 10000)
-        data += struct.pack('<I', 1)#周期重复次数
-        data += struct.pack('<H', 3)#播放次数
-        data += struct.pack('<B', 1)#1单次 2循环
-        data += struct.pack('<B', 100)#序列长度
-        data += struct.pack('<B', 2)#1单向 2双向
-        self.output(self.OUTPUT_EDGE_ACTION, bytearray(data))
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.set_led_linear(
+        red = False,
+        green = True,
+        blue = False,
+        pwd_max = 10000,
+        num_repeat = 1,
+        num_play = 3,
+        play_flag = 1,
+        sequence_len = 100,
+        sequence_dir = 2,
+      ))
 
   def handle_input_edge_battery(self, data: float, timestamp: float) -> None:
     if data[0] == 0:
