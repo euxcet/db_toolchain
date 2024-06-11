@@ -10,6 +10,7 @@ class Graph():
 
   def run(self):
     self.node_manager.start()
+    self.node_manager.block()
 
   @property
   def executor(self) -> ThreadPoolExecutor:

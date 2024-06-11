@@ -4,6 +4,7 @@ from db_graph.framework.graph import Graph
 from db_graph.utils.file_utils import load_json
 from db_graph.utils.config import fill_value_by_name
 from db_zoo.node.device.ringV2 import RingV2
+from db_zoo.node.visualizer.pcm_visualizer import PcmVisualizer
 from receiver import Receiver
 
 def run():

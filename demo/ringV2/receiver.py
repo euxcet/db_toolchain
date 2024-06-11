@@ -40,6 +40,8 @@ class Receiver(Node):
     self.first_battery_time = 0
     self.first_battery = 0
     self.focus = True
+    self.mic_recording = True
+    self.test_latency = 0
 
   @override
   def start(self):
@@ -70,12 +72,16 @@ class Receiver(Node):
     elif key == 'm':
       self.audio = bytearray()
       self.mic_counter.reset()
+      self.mic_recording = True
       print('\nStart recording')
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.OPEN_MIC)
     elif key == ',':
       print('\nEnd of recording')
+      self.mic_recording = False
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.CLOSE_MIC)
       self.save_audio()
+    elif key == 'l':
+      self.test_latency = time.time()
     elif key == 'v':
       self.first_battery = 0
       self.first_battery_time = 0
@@ -125,6 +131,11 @@ class Receiver(Node):
     self.mic_counter.count(enable_print=True, print_dict={'Sensor': 'MIC'})
     length, seq, bytes = data
     self.audio += bytes
+    for i in range(0, len(bytes), 2):
+      v = struct.unpack('<h', bytes[i: i + 2])[0]
+      if abs(v) > 4000 and self.test_latency > 0:
+        print('Latency:', str(round(time.time() - self.test_latency, 2)) + 's')
+        self.test_latency = 0
 
   def handle_input_edge_touch(self, data: tuple, timestamp: float) -> None:
     print('Event', data)

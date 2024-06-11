@@ -38,6 +38,9 @@ class Node(ABC):
   def start(self) -> None:
     ...
 
+  def block(self) -> None:
+    ...
+
   def output(self, edge_name:str, data:Any) -> None:
     self.output_edge[edge_name].put(data)
 

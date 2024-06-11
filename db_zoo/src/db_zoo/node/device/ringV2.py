@@ -48,6 +48,55 @@ class RingV2Action(Enum):
   def from_str(s: str) -> RingV2Action:
     return RingV2Action.__members__[s]
 
+  def set_led_linear(
+    red: bool,
+    green: bool,
+    blue: bool,
+    pwd_max: int,
+    num_repeat: int,
+    num_play: int,
+    play_flag: int,
+    sequence_len: int,
+    sequence_dir: int,
+  ) -> bytearray:
+    data = bytearray([0x0, 0x0, 0x62, 0x1])
+    data += bytearray([blue, red, green]) # 蓝红绿 三个颜色
+    data += struct.pack('<H', pwd_max) # pwd计数最大值
+    data += struct.pack('<I', num_repeat) # 周期重复次数
+    data += struct.pack('<H', num_play) # 播放次数
+    data += struct.pack('<B', play_flag) # 1单次 2循环
+    data += struct.pack('<B', sequence_len) # 序列长度
+    data += struct.pack('<B', sequence_dir) # 1单向 2双向
+    return data
+
+  def set_led_nonlinear(
+    wave: list[int],
+    red: bool,
+    green: bool,
+    blue: bool,
+    pwd_max: int,
+    num_repeat: int,
+    num_play: int,
+    play_flag: int,
+    package_size: int = 200,
+  ) -> list[bytearray]:
+    packages = []
+    num_packages = (len(wave) + package_size - 1) // package_size
+    for i in range(0, len(wave), package_size):
+      package_data = wave[i:i + package_size]
+      package_no = i // package_size
+      package_length = len(package_data)
+      package = bytearray([0x0, 0x0, 0x62, 0x2])
+      package += bytearray([blue, red, green]) # 蓝红绿 三个颜色
+      package += struct.pack('<H', pwd_max) # pwd计数最大值
+      package += struct.pack('<I', num_repeat) # 周期重复次数
+      package += struct.pack('<H', num_play) # 播放次数
+      package += struct.pack('<B', play_flag) # 1单次 2循环
+      package += struct.pack('<BBB', num_packages, package_no, package_length)
+      package += struct.pack(f'<{package_length}H', *package_data)
+      packages.append(package)
+    return packages
+
 class RingV2(Device):
 
   INPUT_EDGE_ACTION     = 'action'

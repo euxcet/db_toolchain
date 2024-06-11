@@ -1,0 +1,37 @@
+{
+  "devices": [
+    {
+      "type": "RingV2",
+      "name": "RingV2",
+      "address" : "F1E6125A-A60D-F925-5E73-0F1845082C36",
+      "input_edges": {
+        "action": "Receiver_ACTION"
+      }
+    }
+  ],
+  "detectors": [
+    {
+      "type": "Receiver",
+      "name": "Receiver",
+      "input_edges": {
+        "imu": "RingV2_IMU",
+        "mic": "RingV2_MIC",
+        "touch": "RingV2_TOUCH",
+        "touch_raw": "RingV2_TOUCH_RAW",
+        "battery": "RingV2_BATTERY"
+      },
+      "output_edges": {
+        "action": "ACTION"
+      }
+    },
+    {
+      "type": "PcmVisualizer",
+      "name": "PcmVisualizer",
+      "input_edges": {
+        "in_data": "RingV2_MIC"
+      },
+      "output_edges": {
+      }
+    }
+  ]
+}

@@ -20,3 +20,8 @@ class NodeManager():
   def start(self):
     for node in self.nodes.values():
       node.start()
+
+  def block(self):
+    for node in self.nodes.values():
+      node.block()
+
