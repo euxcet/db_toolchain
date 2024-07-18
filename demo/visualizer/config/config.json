@@ -1,0 +1,23 @@
+{
+    "detectors": [
+      {
+        "type": "Mock",
+        "name": "Mock",
+        "input_edges": {
+        },
+        "output_edges": {
+            "data": "data"
+        }
+      },
+      {
+        "type": "Visualizer",
+        "name": "Visualizer",
+        "input_edges": {
+          "data": "Mock_data"
+        },
+        "output_edges": {
+        }
+      }
+    ]
+  }
+  

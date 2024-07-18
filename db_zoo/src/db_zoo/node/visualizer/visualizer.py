@@ -6,13 +6,11 @@ from typing_extensions import override
 from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 from collections import deque
-from multiprocessing import Process
-from threading import Thread
 from ...utils.plotter import MultiPlotter
 
-class PcmVisualizer(Node):
+class Visualizer(Node):
 
-  INPUT_EDGE_IN_DATA = 'in_data'
+  INPUT_EDGE_DATA = 'data'
   
   def __init__(
       self,
@@ -21,7 +19,7 @@ class PcmVisualizer(Node):
       input_edges: dict[str, str],
       output_edges: dict[str, str],
   ) -> None:
-    super(PcmVisualizer, self).__init__(
+    super(Visualizer, self).__init__(
       name=name,
       graph=graph,
       input_edges=input_edges,
@@ -33,10 +31,10 @@ class PcmVisualizer(Node):
     self.plotter.add_single_line_plotter(
       row=0,
       col=0,
-      size=2000,
+      size=200,
       data_buffer=self.buffer,
-      x_range=(0, 2000),
-      y_range=(-2000, 2000)
+      x_range=(0, 200),
+      y_range=(-200, 200)
     )
 
   @override
@@ -48,8 +46,6 @@ class PcmVisualizer(Node):
     self.plotter.start(1 / 30)
     app.run()
 
-  def handle_input_edge_in_data(self, data: Any, timestamp: float) -> None:
-    length, seq, bytes = data
-    for i in range(0, len(bytes), 2):
-      self.buffer.append(struct.unpack('<h', bytes[i:i + 2]))
-      break
+  def handle_input_edge_data(self, data: Any, timestamp: float) -> None:
+    print(data)
+    self.buffer.append(data)

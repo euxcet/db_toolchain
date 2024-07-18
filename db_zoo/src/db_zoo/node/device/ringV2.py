@@ -176,7 +176,7 @@ class RingV2(Device):
       await asyncio.sleep(1)
       await self.write(NotifyProtocol.GET_SOFTWARE_VERSION)
       await self.write(NotifyProtocol.GET_HARDWARE_VERSION)
-      # await self.write(NotifyProtocol.OPEN_6AXIS_IMU)
+      await self.write(NotifyProtocol.OPEN_6AXIS_IMU)
 
       while True:
         await self._perform_action()
