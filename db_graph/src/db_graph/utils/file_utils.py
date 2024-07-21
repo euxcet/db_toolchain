@@ -1,6 +1,6 @@
 import os
 import json
-import shutil
+from omegaconf import OmegaConf
 from typing import Any
 
 def make_dir(path: str):
@@ -14,6 +14,11 @@ def remove_file(path: str):
     os.remove(path)
   except:
     print("WARNING: The file[{path}] to be deleted does not exist.".format(path=path))
+
+def load_config(path: str):
+  if path.endswith('.json'):
+    return load_json(path)
+  return OmegaConf.to_object(OmegaConf.load(path))
 
 def load_json(path: str):
   result = None

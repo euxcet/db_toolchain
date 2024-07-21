@@ -48,7 +48,7 @@ class DynamicGestureDetector(TorchNode):
     self.last_gesture_time = [0] * num_classes
     self.trigger_time = [0] * num_classes
     self.block_until_time = [0] * num_classes
-    self.action_block = block
+    self.action_block = {} if block is None else block
     self.counter.print_interval = 400
     self.counter.execute_interval = execute_interval
 
