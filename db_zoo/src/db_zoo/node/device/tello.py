@@ -1,5 +1,8 @@
+import cv2
 import queue
 import socket
+import h264decoder
+import numpy as np
 from threading import Thread
 from typing_extensions import override
 from db_graph.framework.graph import Graph
@@ -27,8 +30,9 @@ class Tello(Device):
             output_edges=output_edges,
         )
         self.udp_socket = None
+        self.video_socket = None
         self.action_queue = queue.Queue[str]()
-        self.tello_ip = '192.168.10.1'
+        self.tello_ip = '192.168.3.15'
         self.tello_port = 8889
 
     # lifecycle callbacks
@@ -58,13 +62,38 @@ class Tello(Device):
     @override
     def connect(self) -> None:
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.bind(('0.0.0.0', 9000))
         Thread(target=self._perform_action).start()
+        self.video_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.video_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.video_socket.bind(('0.0.0.0', 11111))
+        Thread(target=self._receive_video).start()
+        self.broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.broadcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.broadcast_socket.bind(('0.0.0.0', 11112))
+
+    def _receive_video(self):
+        decoder = h264decoder.H264Decoder()
+        while True:
+            response = self.video_socket.recv(4096)
+            self.broadcast_socket.send(response)
+            framedatas = decoder.decode(response)
+            for framedata in framedatas:
+                (frame, w, h, ls) = framedata
+                array = np.frombuffer(frame, dtype=np.uint8).reshape((720, 960, 3))
+                self.output(self.OUTPUT_EDGE_VIDEO, cv2.cvtColor(array, cv2.COLOR_BGR2RGB))
 
     @override
     def disconnect(self) -> None:
+        self.on_disconnect()
         if self.udp_socket is not None:
             self.udp_socket.close()
+        if self.video_socket is not None:
+            self.video_socket.close()
+        if self.broadcast_socket is not None:
+            self.broadcast_socket.close()
+        # connect()
 
     @override
     def reconnect(self) -> None:

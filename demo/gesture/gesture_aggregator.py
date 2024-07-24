@@ -7,6 +7,7 @@ from db_graph.framework.node import Node
 class GestureAggregator(Node):
 
   INPUT_EDGE_EVENT = 'event'
+  INPUT_EDGE_TOUCH = 'touch'
   OUTPUT_EDGE_RESULT = 'result'
 
   def __init__(
@@ -28,6 +29,9 @@ class GestureAggregator(Node):
   @override
   def start(self):
     ...
+
+  def handle_input_edge_touch(self, event: str, timestamp: float) -> None:
+    print(event)
 
   def handle_input_edge_event(self, event: str, timestamp: float) -> None:
     for gesture in self.gestures:

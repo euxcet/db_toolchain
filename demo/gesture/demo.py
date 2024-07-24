@@ -10,7 +10,7 @@ from db_zoo.node.device.ring import Ring
 
 def run():
   parser = argparse.ArgumentParser()
-  parser.add_argument('-c', '--config', type=str, default='config/ring_only_config.json')
+  parser.add_argument('-c', '--config', type=str, default='config/config.json')
   parser.add_argument('-r', '--ring', type=str, default=None)
   parser.add_argument('-g', '--glove', type=str, default=None)
   args = parser.parse_args()

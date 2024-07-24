@@ -1,26 +1,20 @@
 {
   "devices": [
     {
-      "type": "ring",
+      "type": "Ring",
       "name": "Ring",
-      "address" : "0D85597D-C82C-E839-E0E0-4776246A6398"
-    },
-    {
-      "type": "glove",
-      "name": "Glove",
-      "version": "IMU_6AXIS_QUATERNION",
-      "ip": "169.254.6.2"
+      "address": "609CD89E-6220-4A33-C175-CE350F498AB9"
     }
   ],
   "detectors": [
     {
       "type": "DynamicGestureDetector",
       "name": "DynamicGestureDetector",
-      "input_streams": {
-        "imu": "Ring_IMU"
+      "input_edges": {
+        "imu": "Ring_imu"
       },
-      "output_streams": {
-        "result": "RESULT"
+      "output_edges": {
+        "result": "result"
       },
       "num_classes": 19,
       "imu_window_length": 200,
@@ -34,48 +28,24 @@
       "block": { }
     },
     {
-      "type": "StaticGestureDetector",
-      "name": "StaticGestureDetector",
-      "input_streams": {
-        "quaternion": "Glove_QUATERNION"
-      },
-      "output_streams": {
-        "result": "RESULT"
-      },
-      "num_classes": 11,
-      "checkpoint_file": "checkpoint/glove.pth",
-      "result_window_length": 10,
-      "execute_interval": 10,
-      "labels": ["negative", "g_hostage", "g_gather", "g_quick", "g_stop", "g_search", "g_ok", "g_safe", "g_danger", "g_prepare", "g_sniper"],
-      "confidence_threshold": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
-      "min_trigger_interval": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
-    },
-    {
       "type": "GestureAggregator",
       "name": "GestureAggregator",
-      "input_streams": {
-        "event": ["DynamicGestureDetector_RESULT", "StaticGestureDetector_RESULT"]
+      "input_edges": {
+        "event": "DynamicGestureDetector_result",
+        "touch": "Ring_touch"
       },
-      "output_streams": {
-        "result": "RESULT"
+      "output_edges": {
+        "result": "GestureAggregator_result"
       },
       "gestures": [
-        { "name": "捏拳", "events": ["r_bomb"] },
-        { "name": "靠拢", "events": ["r_close"] },
-        { "name": "双指捏合", "events": ["r_cover"] },
-        { "name": "握拳双击", "events": ["r_enemy"] },
-        { "name": "画圈", "events": ["r_gather"] },
-        { "name": "赶快", "events": ["r_quick"] },
-        { "name": "前进", "events": ["r_forward"] },
-        { "name": "重复", "events": ["r_repeat"] },
-        { "name": "握脖子", "events": ["g_hostage"] },
-        { "name": "准备", "events": ["g_prepare"] },
-        { "name": "确认", "events": ["g_ok"] },
-        { "name": "支持", "events": ["g_safe"] },
-        { "name": "反对", "events": ["g_danger"] },
-        { "name": "指眼睛", "events": ["g_search"] },
-        { "name": "圆圈", "events": ["g_sniper"] },
-        { "name": "停止", "events": ["g_stop"] }
+        { "name": "bomb", "events": ["r_bomb"] },
+        { "name": "close", "events": ["r_close"] },
+        { "name": "cover", "events": ["r_cover"] },
+        { "name": "enemy", "events": ["r_enemy"] },
+        { "name": "gather", "events": ["r_gather"] },
+        { "name": "quick", "events": ["r_quick"] },
+        { "name": "forward", "events": ["r_forward"] },
+        { "name": "repeat", "events": ["r_repeat"] }
       ]
     }
   ]

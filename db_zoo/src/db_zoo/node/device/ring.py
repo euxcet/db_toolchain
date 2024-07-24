@@ -14,6 +14,7 @@ from db_graph.framework.device import Device, DeviceLifeCircleEvent
 from db_graph.data.imu_data import IMUData
 from db_graph.utils.logger import logger
 from db_graph.utils.data_utils import index_sequence
+from db_graph.utils.window import Window
 
 class RingAction(Enum):
   DISCONNECT = 0
@@ -214,6 +215,15 @@ class Ring(Device):
     self.imu_byte_array = bytearray()
     self.imu_mode = False
     self.lifecycle_status = DeviceLifeCircleEvent.on_create
+    self.alive_window = Window(200)
+    self.connected_time = 0
+
+  def check_alive(self, new_data: bool = False) -> None:
+    if new_data:
+      self.alive_window.push(time.time())
+    if self.alive_window.capacity() > 0:
+      return time.time() - self.alive_window.window[0] < 2.0
+    return True
 
   # lifecycle callbacks
   @override
@@ -227,6 +237,7 @@ class Ring(Device):
     self.log_info("Connected")
     self.lifecycle_status = DeviceLifeCircleEvent.on_connect
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_connect)
+    self.connected_time = time.time()
 
   @override
   def on_disconnect(self, *args, **kwargs) -> None:
@@ -241,6 +252,8 @@ class Ring(Device):
 
   # active control
   async def connect_async(self) -> None:
+    self.connected_time = 0
+    self.alive_window.clear()
     self.on_pair()
     if self.adapter is None:
       self.client = BleakClient(self.address, disconnected_callback=self.on_disconnect)
@@ -260,17 +273,22 @@ class Ring(Device):
       await self.spp_write('ENDB6AX')
     await self.set_led_color(self.led_color)
     self.on_connect()
+    self.check_alive(new_data=True)
 
-    while self.client.is_connected:
-      await self._perform_action()
+    while True:
+      if self.client.is_connected:
+        await self._perform_action()
       await asyncio.sleep(0.2)
+      if not self.check_alive():
+        break
+    await self.reconnect_async()
   
   async def disconnect_async(self) -> None:
     await self.client.disconnect()
 
   async def reconnect_async(self) -> None:
     await self.client.disconnect()
-    await self.connect()
+    await self.connect_async()
 
   @override
   def connect(self) -> None:
@@ -301,6 +319,7 @@ class Ring(Device):
     if self.imu_mode:
       for data in results:
         self.output(self.OUTPUT_EDGE_IMU, data)
+        self.check_alive(new_data=True)
     else:
       for result in results:
         if result[0] == NotifyProtocol.SPP_ENDB6AX_RESPONSE:
@@ -335,7 +354,7 @@ class Ring(Device):
   async def _perform_action(self) -> None:
     func = {
       RingAction.DISCONNECT: self.disconnect,
-      RingAction.RECONNECT: self.reconnect,
+      RingAction.RECONNECT: self.reconnect_async,
       RingAction.SPP_WRITE: self.spp_write,
       RingAction.SET_LED_COLOR: self.set_led_color,
       RingAction.LED_BLINK: self.led_blink,
