@@ -1,46 +1,93 @@
 devices:
+  - type: Tello
+    name: Tello
+    ip: 192.168.3.15
+    ar_video_ip: 192.168.3.18
+    input_edges:
+      action: DroneController_command
+
+  - type: GshxAR
+    name: GshxAR
+    input_edges:
+      objects: Commander_objects
+    ip: 192.168.3.18
+
   - type: Ring
     name: Ring
     address: 609CD89E-6220-4A33-C175-CE350F498AB9
 
 nodes:
-  - type: DynamicGestureDetector
-    name: DynamicGestureDetector
+  - type: DroneController
+    name: DroneController
     input_edges:
       imu: Ring_imu
     output_edges:
-      result: result
-    num_classes: 19
-    imu_window_length: 200
-    result_window_length: 4
-    checkpoint_file: checkpoint/ring.pth
-    execute_interval: 10
-    labels: [r_move, r_move, r_move, r_bomb, r_close, r_forward, r_gather, r_quick, r_enemy, r_cover, r_repeat]
-    confidence_threshold: [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9]
-    min_trigger_interval: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    trigger_wait_time: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    block: 
+      command: command
 
-  - type: GestureAggregator
-    name: GestureAggregator
-    input_edges: 
-      event: DynamicGestureDetector_result
+  - type: ObjectDetector
+    name: ObjectDetector
+    input_edges:
+      video: Tello_video
     output_edges:
-      result: GestureAggregator_result
-    gestures:
-      - name: 捏拳
-        events: [r_bomb]
-      - name: 靠拢
-        events: [r_close]
-      - name: 双指捏合
-        events: [r_cover]
-      - name: 握拳双击
-        events: [r_enemy]
-      - name: 画圈
-        events: [r_gather]
-      - name: 赶快
-        events: [r_quick]
-      - name: 前进
-        events: [r_forward]
-      - name: 重复
-        events: [r_repeat]
+      objects: objects
+
+  - type: Commander
+    name: Commander
+    input_edges:
+      eye: GshxAR_eye
+      objects: ObjectDetector_objects
+    output_edges:
+      objects: objects
+
+  # - type: DroneController
+  #   name: DroneController
+  #   input_edges:
+  #     imu: Ring_imu
+  #   output_edges:
+  #     result: result
+  #   ip: 192.168.3.15
+  #   port: 8889
+  #   broadcast_port: 11112
+
+
+
+  # - type: DynamicGestureDetector
+  #   name: DynamicGestureDetector
+  #   input_edges:
+  #     imu: Ring_imu
+  #   output_edges:
+  #     result: result
+  #   num_classes: 19
+  #   imu_window_length: 200
+  #   result_window_length: 4
+  #   checkpoint_file: checkpoint/ring.pth
+  #   execute_interval: 10
+  #   labels: [r_move, r_move, r_move, r_bomb, r_close, r_forward, r_gather, r_quick, r_enemy, r_cover, r_repeat]
+  #   confidence_threshold: [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9]
+  #   min_trigger_interval: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  #   trigger_wait_time: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  #   block: 
+
+  # - type: GestureAggregator
+  #   name: GestureAggregator
+  #   input_edges: 
+  #     event: DynamicGestureDetector_result
+  #   output_edges:
+  #     result: GestureAggregator_result
+  #   gestures:
+  #     - name: 捏拳
+  #       events: [r_bomb]
+  #     - name: 靠拢
+  #       events: [r_close]
+  #     - name: 双指捏合
+  #       events: [r_cover]
+  #     - name: 握拳双击
+  #       events: [r_enemy]
+  #     - name: 画圈
+  #       events: [r_gather]
+  #     - name: 赶快
+  #       events: [r_quick]
+  #     - name: 前进
+  #       events: [r_forward]
+  #     - name: 重复
+  #       events: [r_repeat]

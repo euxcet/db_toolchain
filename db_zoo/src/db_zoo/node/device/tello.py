@@ -16,10 +16,17 @@ class Tello(Device):
     OUTPUT_EDGE_VIDEO = 'video'
     OUTPUT_EDGE_LIFECYCLE = 'lifecycle'
 
+    TELLO_PORT = 8889
+    COMMAND_PORT = 9000
+    VIDEO_PORT = 11111
+
     def __init__(
       self,
       name: str,
       graph: Graph,
+      ip: str,
+      ar_video_ip: int = '192.168.3.12',
+      ar_video_port: int = 11111,
       input_edges: dict[str, str] = {},
       output_edges: dict[str, str] = {},
     ) -> None:
@@ -32,8 +39,10 @@ class Tello(Device):
         self.udp_socket = None
         self.video_socket = None
         self.action_queue = queue.Queue[str]()
-        self.tello_ip = '192.168.3.15'
-        self.tello_port = 8889
+        self.tello_ip = ip 
+        self.ar_video_ip = ar_video_ip
+        self.ar_video_port = ar_video_port
+        self.ar_video_socket = None
 
     # lifecycle callbacks
     @override
@@ -61,28 +70,34 @@ class Tello(Device):
 
     @override
     def connect(self) -> None:
+        self.on_pair()
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.udp_socket.bind(('0.0.0.0', 9000))
+        self.udp_socket.bind(('0.0.0.0', self.COMMAND_PORT))
         Thread(target=self._perform_action).start()
         self.video_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.video_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.video_socket.bind(('0.0.0.0', 11111))
+        self.video_socket.bind(('0.0.0.0', self.VIDEO_PORT))
         Thread(target=self._receive_video).start()
-        self.broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.broadcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.broadcast_socket.bind(('0.0.0.0', 11112))
+        self.ar_video_socket= socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.ar_video_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.action_queue.put('command')
+        self.action_queue.put('battery?')
+        self.action_queue.put('streamon')
+        self.on_connect()
 
     def _receive_video(self):
         decoder = h264decoder.H264Decoder()
         while True:
             response = self.video_socket.recv(4096)
-            self.broadcast_socket.send(response)
+            if self.ar_video_socket is not None:
+                self.ar_video_socket.sendto(response, (self.ar_video_ip, self.ar_video_port))
             framedatas = decoder.decode(response)
             for framedata in framedatas:
                 (frame, w, h, ls) = framedata
-                array = np.frombuffer(frame, dtype=np.uint8).reshape((720, 960, 3))
-                self.output(self.OUTPUT_EDGE_VIDEO, cv2.cvtColor(array, cv2.COLOR_BGR2RGB))
+                array = np.frombuffer(frame, dtype=np.uint8).reshape((h, w, 3))
+                cv_frame = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
+                self.output(self.OUTPUT_EDGE_VIDEO, cv_frame)
 
     @override
     def disconnect(self) -> None:
@@ -91,9 +106,8 @@ class Tello(Device):
             self.udp_socket.close()
         if self.video_socket is not None:
             self.video_socket.close()
-        if self.broadcast_socket is not None:
-            self.broadcast_socket.close()
-        # connect()
+        if self.ar_video_socket is not None:
+            self.ar_video_socket.close()
 
     @override
     def reconnect(self) -> None:
@@ -104,9 +118,14 @@ class Tello(Device):
         while True:
             action = self.action_queue.get()
             if self.udp_socket is not None:
-                self.udp_socket.sendto(action.encode(), (self.tello_ip, self.tello_port))
-                response, _ = self.udp_socket.recvfrom(1024)
-                self.output(self.OUTPUT_EDGE_ACTION_RESPONSE, (action, response.decode()))
+                try:
+                    self.udp_socket.sendto(action.encode(), (self.tello_ip, self.TELLO_PORT))
+                    response, _ = self.udp_socket.recvfrom(1024)
+                    print(action, response.decode())
+                    self.output(self.OUTPUT_EDGE_ACTION_RESPONSE, (action, response.decode()))
+                except Exception as e:
+                    print(e)
 
     def handle_input_edge_action(self, data: str, timestamp: float) -> None:
+        # print('recv', data)
         self.action_queue.put(data)

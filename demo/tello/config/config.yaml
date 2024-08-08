@@ -1,0 +1,16 @@
+devices:
+  - type: Tello
+    name: Tello
+    ip: 192.168.3.15
+    ar_video_ip: 192.168.3.18
+    input_edges:
+      action: DroneController_command
+
+
+nodes:
+  - type: DroneController
+    name: DroneController
+    input_edges:
+      response: Tello_action_response
+    output_edges:
+      command: command

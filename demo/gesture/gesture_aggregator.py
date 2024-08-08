@@ -34,9 +34,11 @@ class GestureAggregator(Node):
     print(event)
 
   def handle_input_edge_event(self, event: str, timestamp: float) -> None:
+    print(event, time.time())
     for gesture in self.gestures:
       if gesture.update(event):
         self.log_info(gesture.name)
+        print(gesture.name, time.time())
         self.output(self.OUTPUT_EDGE_RESULT, gesture.name)
 
   class Gesture():
