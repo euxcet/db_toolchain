@@ -26,16 +26,40 @@ class DroneAction(Enum):
   TURN = 5
   TURN_LEFT = 6
   TURN_RIGHT = 7
-  MOVE_LEFT = 8
-  MOVE_RIGHT = 9
-  MOVE_DOWN = 10
-  MOVE_UP = 11
+  STOP_TURN = 8
+  MOVE_LEFT = 9
+  MOVE_RIGHT = 10
+  MOVE_DOWN = 11
+  MOVE_UP = 12
 
 class HandDirection(Enum):
   UP = 0
   DOWN = 1
   FORWARD = 2
   UNKNOWN = 3
+
+
+
+"""
+version 1:
+takeoff 下垂->抬起->下垂->抬起 z -1 -> 1 -> -1 -> 1
+land 抬起->下垂->抬起->下垂 z 1 -> -1 -> 1 -> -1
+move 抬起->水平->抬起->水平 speed x 
+stop 抬起 stop
+turn_left 抬起->水平->左转 rc 0 0 0 -20
+turn_right 抬起->水平->右转 rc 0 0 0 20
+
+version 2:
+takeoff 下垂->抬起->下垂->抬起 z -1 -> 1 -> -1 -> 1
+land 抬起->下垂->抬起->下垂 z 1 -> -1 -> 1 -> -1
+stop 抬起 stop
+move_forward 抬起->水平->抬起->水平 手掌朝前 rc 0 20 0 0
+move_backward 抬起->水平->抬起->水平 手掌朝后 rc 0 -20 0 0
+move_left 抬起->水平->左转 
+move_right 抬起->水平->右转 
+turn_left rc 0 0 0 -20
+turn_right rc 0 0 0 20
+"""
 
 class DroneController(Node):
 

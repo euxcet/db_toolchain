@@ -9,8 +9,11 @@ from db_zoo.node.algorithm.gesture_aggregator import GestureAggregator
 from db_zoo.node.device.ring import Ring
 from db_zoo.node.device.tello import Tello
 from db_zoo.node.device.gshx_ar import GshxAR
-from drone_controller import DroneController
+from drone_controller_v0 import DroneController
 from object_detector import ObjectDetector
+from face_detector import FaceDetector
+from frame_visualizer import FrameVisualizer
+from video_mock import VideoMock
 from commander import Commander
 
 def run():

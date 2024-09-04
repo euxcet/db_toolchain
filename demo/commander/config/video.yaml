@@ -1,0 +1,45 @@
+devices:
+  - type: VideoMock
+    name: VideoMock
+    input_edges: {}
+    output_edges:
+      video: video
+    path: test.mp4
+
+  - type: GshxAR
+    name: GshxAR
+    input_edges:
+      objects: Commander_objects
+    ip: 192.168.3.18
+    # ip: 192.168.101.181
+    
+nodes:
+  - type: ObjectDetector
+    name: ObjectDetector
+    input_edges:
+      video: VideoMock_video
+    output_edges:
+      objects: objects
+
+  - type: FaceDetector
+    name: FaceDetector
+    input_edges:
+      video: VideoMock_video
+    output_edges:
+      faces: faces
+
+  - type: FrameVisualizer
+    name: FrameVisualizer
+    input_edges:
+      video: VideoMock_video
+      objects: ObjectDetector_objects
+      faces: FaceDetector_faces
+    output_edges: {}
+
+  - type: Commander
+    name: Commander
+    input_edges:
+      eye: GshxAR_eye
+      objects: ObjectDetector_objects
+    output_edges:
+      objects: objects

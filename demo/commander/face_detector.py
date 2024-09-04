@@ -2,6 +2,7 @@ import cv2
 import time
 import numpy as np
 import queue
+import face_recognition
 from threading import Thread
 from ultralytics import YOLO
 from typing_extensions import override
@@ -10,10 +11,10 @@ from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 from db_graph.utils.counter import Counter
 
-class ObjectDetector(Node):
+class FaceDetector(Node):
 
   INPUT_EDGE_VIDEO = 'video'
-  OUTPUT_EDGE_OBJECTS = 'objects'
+  OUTPUT_EDGE_FACES = 'faces'
 
   def __init__(
       self,
@@ -30,8 +31,6 @@ class ObjectDetector(Node):
     )
     self.frame_queue = queue.Queue()
     # self.predict_queue = queue.Queue()
-    self.model = YOLO("yolov8n.pt")
-    self.boxes = None
     self.counter = Counter(print_interval=50)
     self.predict_thread = Thread(target=self.predict)
 
@@ -44,9 +43,9 @@ class ObjectDetector(Node):
         frame = self.frame_queue.get()
         while not self.frame_queue.empty():
             frame = self.frame_queue.get()
-        results = self.model.track(source=frame, persist=True, tracker='bytetrack.yaml', verbose=False)
-        self.boxes = results[0].boxes
-        self.output(self.OUTPUT_EDGE_OBJECTS, self.boxes)
+        face_locations = face_recognition.face_locations(frame)
+        face_encodings = face_recognition.face_encodings(frame, face_locations)
+        self.output(self.OUTPUT_EDGE_FACES, (face_locations, face_encodings))
 
   @override
   def block(self):
@@ -55,10 +54,6 @@ class ObjectDetector(Node):
     #     frame = self.frame_queue.get()
     #     self.counter.count(enable_print=True)
     #     self.predict_queue.put(frame)
-    #     if self.boxes is not None:
-    #         for box, conf in zip(self.boxes.xyxy, self.boxes.conf):
-    #             if conf > 0.5:
-    #                 frame = cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 0, 255), 2)
     #     cv2.imshow('frame', frame)
     #     cv2.waitKey(3)
 

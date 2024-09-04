@@ -127,5 +127,5 @@ class Tello(Device):
                     print(e)
 
     def handle_input_edge_action(self, data: str, timestamp: float) -> None:
-        # print('recv', data)
+        print('Tello', data)
         self.action_queue.put(data)

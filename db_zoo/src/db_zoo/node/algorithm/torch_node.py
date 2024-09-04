@@ -5,6 +5,8 @@ from typing import Any
 from typing_extensions import override
 import torch
 import torch.nn as nn
+from thop import profile
+from thop import clever_format
 from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 
@@ -31,6 +33,10 @@ class TorchNode(Node):
       self.model: nn.Module = model
       self.model.load_state_dict(torch.load(checkpoint_file, map_location=self.device))
       self.model.eval()
+      # inp = torch.randn(1, 6, 1, 200)
+      # flops, params = profile(model, inputs=(inp,))
+      # flops, params = clever_format([flops, params], '%.3f')
+      # print(flops, params)
 
   @override
   def start(self):
