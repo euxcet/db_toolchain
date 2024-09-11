@@ -1,0 +1,22 @@
+devices:
+  - type: RingV2
+    name: RingV2
+    address: D029833A-E1B7-5520-F242-D08B78F90D4D
+    input_edges:
+      action: Receiver_ACTION
+detectors:
+  - type: Receiver
+    name: Receiver
+    input_edges:
+      imu: RingV2_IMU
+      mic: RingV2_mic
+      touch: RingV2_TOUCH
+      touch_raw: RingV2_TOUCH_RAW
+      battery: RingV2_BATTERY
+    output_edges:
+      action: ACTION
+  - type: ImuVisualizer
+    name: ImuVisualizer
+    input_edges:
+      imu: RingV2_IMU
+    output_edges: {}

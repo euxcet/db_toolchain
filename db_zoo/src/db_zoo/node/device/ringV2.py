@@ -209,7 +209,6 @@ class RingV2(Device):
     if data[2] == 0x62 and data[3] == 0x3:
       print('自定义灯pwm空闲结果')
 
-
     if data[2] == 0x10 and data[3] == 0x0:
       print(data[4])
     if data[2] == 0x11 and data[3] == 0x0:
@@ -273,11 +272,16 @@ class RingV2(Device):
           self.reconnect()
         elif action == RingV2Action.GET_BATTERY_LEVEL:
           await self.write(NotifyProtocol.GET_BATTERY_LEVEL)
-        elif action == RingV2Action.OPEN_MIC:
-          await self.write(NotifyProtocol.OPEN_MIC)
+        # elif action == RingV2Action.OPEN_MIC:
+        #   await self.write(NotifyProtocol.OPEN_MIC)
         elif action == RingV2Action.CLOSE_MIC:
           await self.write(NotifyProtocol.CLOSE_MIC)
         elif action == RingV2Action.OPEN_IMU:
           await self.write(NotifyProtocol.OPEN_6AXIS_IMU)
         elif action == RingV2Action.CLOSE_IMU:
           await self.write(NotifyProtocol.CLOSE_6AXIS_IMU)
+
+# up 9.8 0 0
+# down -9.8 0 0
+# forward 0 0 -9.8
+# to_left 0 -9.8 0

@@ -41,6 +41,7 @@ class Receiver(Node):
     self.first_battery = 0
     self.focus = True
     self.mic_recording = True
+    self.audio = bytearray()
     self.test_latency = 0
 
   @override
@@ -98,8 +99,10 @@ class Receiver(Node):
         num_play = 3,
         play_flag = 1,
       ):
+        print(data)
         self.output(self.OUTPUT_EDGE_ACTION, data)
     elif key == 's': #呼吸灯
+      print(data)
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.set_led_linear(
         red = False,
         green = True,

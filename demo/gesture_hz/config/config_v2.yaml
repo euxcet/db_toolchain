@@ -1,15 +1,14 @@
 devices:
-  - type: Ring
-    name: Ring
-    address: 609CD89E-6220-4A33-C175-CE350F498AB9
-    # address: 0D85597D-C82C-E839-E0E0-4776246A6398
+  - type: RingV2
+    name: RingV2
+    address: D029833A-E1B7-5520-F242-D08B78F90D4D
 
 nodes:
   - type: GestureDetector
     name: GestureDetector
     input_edges:
-      imu: Ring_imu
-      touch: Ring_touch
+      imu: RingV2_imu
+      touch: RingV2_touch
     output_edges:
       gesture: gesture
     num_classes: 44

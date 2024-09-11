@@ -74,18 +74,16 @@ class SingleLinePlotter:
         self.line.set_data(color=color)
 
     def update(self) -> None:
-        # print(self.data_buffer)
         if self.data_buffer is None:
-            # raise ValueError('data_buffer is not set.')
             print("data_buffer is not set.")
         try:
-            new_data = self.data_buffer.popleft()
+            self.data = np.roll(self.data, -len(self.data_buffer), axis=0)
+            for i in range(len(self.data_buffer)):
+                self.data[-len(self.data_buffer) + i] = self.data_buffer[i]
+            self.data_buffer.clear()
+            self.set_data(self.data)
         except IndexError:
-            # print('data_buffer is empty.')
             return
-        self.data = np.roll(self.data, -1, axis=0)
-        self.data[-1] = new_data
-        self.set_data(self.data)
 
 
 class SingleBarPlotter:
