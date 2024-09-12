@@ -99,10 +99,8 @@ class Receiver(Node):
         num_play = 3,
         play_flag = 1,
       ):
-        print(data)
         self.output(self.OUTPUT_EDGE_ACTION, data)
     elif key == 's': #呼吸灯
-      print(data)
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.set_led_linear(
         red = False,
         green = True,
@@ -141,7 +139,7 @@ class Receiver(Node):
         self.test_latency = 0
 
   def handle_input_edge_touch(self, data: tuple, timestamp: float) -> None:
-    print('Event', data)
+    print('Touch Event', data)
 
   def handle_input_edge_touch_raw(self, data: tuple, timestamp: float) -> None:
     length, bytes = data

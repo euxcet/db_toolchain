@@ -1,7 +1,7 @@
 devices:
   - type: RingV2
     name: RingV2
-    address: D029833A-E1B7-5520-F242-D08B78F90D4D
+    address: B8F94FEA-2353-018E-F079-D8F47C152048
     input_edges:
       action: Receiver_ACTION
 detectors:
