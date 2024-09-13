@@ -9,12 +9,14 @@ import asyncio
 import inspect
 from enum import Enum
 from bleak import BleakClient
+from collections import deque
 from typing_extensions import override
 from db_graph.framework.graph import Graph
 from db_graph.framework.device import Device, DeviceLifeCircleEvent
 from db_graph.data.imu_data import IMUData
 from db_graph.utils.logger import logger
 from db_graph.utils.data_utils import index_sequence
+from threading import Thread
 import wave
 
 class NotifyProtocol():
@@ -134,10 +136,40 @@ class RingV2(Device):
     self.enable_touch = enable_touch
     self.quiet_log = quiet_log
     self.led_color = led_color
+    self.taped = False
+    self.touch_type = -1
+    self.tap_thread = Thread(target=self.tap_func)
+    self.tap_thread.daemon = True
+    self.tap_thread.start()
     self.action_queue = queue.Queue()
     self.imu_byte_array = bytearray()
     self.imu_mode = False
     self.lifecycle_status = DeviceLifeCircleEvent.on_create
+    self.touch_history = []
+    self.last_touch_timestmap = time.time()
+    self.is_holding = False
+
+  def tap_func(self):
+    counter = -1
+    while True:
+      if self.taped:
+        if counter != -1:
+          self.output(self.OUTPUT_EDGE_TOUCH, 'double_tap')
+          counter = -1
+        else:
+          counter = 0
+        self.taped = False
+      elif counter >= 0:
+        counter += 1
+        if counter == 25: # tap interval
+          if self.touch_type == 0:
+            self.output(self.OUTPUT_EDGE_TOUCH, 'tap')
+          elif self.touch_type == 1:
+            self.output(self.OUTPUT_EDGE_TOUCH, 'down')
+          elif self.touch_type == 2:
+            self.output(self.OUTPUT_EDGE_TOUCH, 'up')
+          counter = -1
+      time.sleep(0.01)
 
   # lifecycle callbacks
   @override
@@ -230,7 +262,8 @@ class RingV2(Device):
             time.time(),
         ))
     elif data[2] == 0x61 and data[3] == 0x0:
-      self.output(self.OUTPUT_EDGE_TOUCH, data[4])
+      ...
+      # self.output(self.OUTPUT_EDGE_TOUCH, data[4])
     elif data[2] == 0x61 and data[3] == 0x1:
       self._detect_touch_events(data[5:])
       self.output(self.OUTPUT_EDGE_TOUCH_RAW, (data[4], data[5:]))
@@ -241,24 +274,65 @@ class RingV2(Device):
   def handle_input_edge_action(self, data: RingV2Action|bytearray, timestamp: float) -> None:
     self.action_queue.put(data)
 
+  def get_touch_state(self, x, y, z):
+    # 0: 000 -> 0
+    # 1: 001 -> 1
+    # 2: 010 -> 3
+    # 3: 011 -> 2
+    # 4: 100 -> 5
+    # 5: 101 -> -1
+    # 6: 110 -> 4
+    # 7: 111 -> -2
+    return [0, 1, 3, 2, 5, -1, 4, -2][x * 4 + y * 2 + z]
+
   def _detect_touch_events(self, data: bytearray) -> None:
-    status = " touch status:"
-    status += f"  {1 if data[1] & 0x02 else 0}   "
-    status += f"  {1 if data[1] & 0x08 else 0}   "
-    status += f"  {1 if data[1] & 0x20 else 0}   "
-    self.output(self.OUTPUT_EDGE_TOUCH, status)
-    if data[2] & 0x01:
-      self.output(self.OUTPUT_EDGE_TOUCH, "tap")
-    elif data[2] & 0x02:
-      self.output(self.OUTPUT_EDGE_TOUCH, "swipe_positive")
-    elif data[2] & 0x04:
-      self.output(self.OUTPUT_EDGE_TOUCH, "swipe_negative")
-    elif data[2] & 0x08:
-      self.output(self.OUTPUT_EDGE_TOUCH, "flick_positive")
-    elif data[2] & 0x10:
-      self.output(self.OUTPUT_EDGE_TOUCH, "flick_negative")
-    elif data[2] & 0x20:
-      self.output(self.OUTPUT_EDGE_TOUCH, "hold")
+    new_touch = [
+      self.get_touch_state(
+        1 if data[1] & 0x02 else 0,
+        1 if data[1] & 0x08 else 0,
+        1 if data[1] & 0x20 else 0),
+      time.time(), ]
+    self.touch_history.append(new_touch)
+    if new_touch[0] == 0:
+      if not self.is_holding and len(self.touch_history) > 1:
+        self.taped = True
+        if self.touch_history[-2][-1] - self.touch_history[0][-1] < 0.05:
+          self.touch_type = 0
+        elif self.touch_history[-2][0] > self.touch_history[0][0]:
+          self.touch_type = 1
+        elif self.touch_history[-2][0] < self.touch_history[0][0]:
+          self.touch_type = 2
+        else:
+          self.touch_type = 0
+      self.is_holding = False
+      self.touch_history.clear()
+    else:
+      if self.touch_history[-1][-1] - self.touch_history[0][-1] > 1.5 and not self.is_holding:
+        self.output(self.OUTPUT_EDGE_TOUCH, 'hold')
+        self.is_holding = True
+
+    # timestamp = time.time()
+    # if timestamp - self.last_touch_timestmap > 1:
+    #   self.touch_history.clear()
+    # self.touch_history.append(new_touch)
+
+    # status = " touch status:"
+    # status += f"  {1 if data[1] & 0x02 else 0}   "
+    # status += f"  {1 if data[1] & 0x08 else 0}   "
+    # status += f"  {1 if data[1] & 0x20 else 0}   "
+    # self.output(self.OUTPUT_EDGE_TOUCH, status)
+    # if data[2] & 0x01:
+    #   self.output(self.OUTPUT_EDGE_TOUCH, "tap")
+    # elif data[2] & 0x02:
+    #   self.output(self.OUTPUT_EDGE_TOUCH, "swipe_positive")
+    # elif data[2] & 0x04:
+    #   self.output(self.OUTPUT_EDGE_TOUCH, "swipe_negative")
+    # elif data[2] & 0x08:
+    #   self.output(self.OUTPUT_EDGE_TOUCH, "flick_positive")
+    # elif data[2] & 0x10:
+    #   self.output(self.OUTPUT_EDGE_TOUCH, "flick_negative")
+    # elif data[2] & 0x20:
+    #   self.output(self.OUTPUT_EDGE_TOUCH, "hold")
 
   async def _perform_action(self) -> None:
     while not self.action_queue.empty():

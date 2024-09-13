@@ -39,7 +39,9 @@ class OrientationVisualizer(Node):
     view.camera.set_range() 
 
     def update(ev):
-      print('update')
+      self.lines.set_data(self.pos)
+      self.markers.set_data(self.pos)
+
     timer = vispy.app.Timer(interval=0.01, connect=update, start=True)
 
     grid = scene.visuals.GridLines(parent=view.scene)
@@ -49,11 +51,6 @@ class OrientationVisualizer(Node):
 
     # 设置视图相机的方向和范围
     view.camera = scene.cameras.TurntableCamera(elevation=10, azimuth=10, distance=5)
-
-  def update(self, ev) -> None:
-    print('update', self.pos)
-    self.lines.set_data(self.pos)
-    self.markers.set_data(self.pos)
 
   @override
   def start(self) -> None:
