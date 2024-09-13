@@ -296,7 +296,7 @@ class RingV2(Device):
     if new_touch[0] == 0:
       if not self.is_holding and len(self.touch_history) > 1:
         self.taped = True
-        if self.touch_history[-2][-1] - self.touch_history[0][-1] < 0.05:
+        if self.touch_history[-2][-1] - self.touch_history[0][-1] < 0.15:
           self.touch_type = 0
         elif self.touch_history[-2][0] > self.touch_history[0][0]:
           self.touch_type = 1
