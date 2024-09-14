@@ -78,7 +78,6 @@ class GestureDetector(TorchNode):
     position = np.array(orientation.rotate([1, 0, 0]))
     self.last_position = position
 
-    # print(position)
     self.orientation_queue.append(copy.deepcopy(orientation))
     if len(self.orientation_queue) < 2:
         return
@@ -87,18 +86,11 @@ class GestureDetector(TorchNode):
     delta_orientation = self.orientation_queue[0].inverse * orientation
     delta_orientation = np.array(delta_orientation.yaw_pitch_roll)
 
-    # x_move = self.butter_filter_x.filter([delta_orientation[1]]) * 3000
-    # y_move = self.butter_filter_y.filter([delta_orientation[2]]) * 3000
-    # print(x_move, y_move)
-    # x_move = (1 if x_move > 0 else (-1 if x_move < 0 else 0))  * abs(x_move) ** 1
-    # y_move = (1 if y_move > 0 else (-1 if y_move < 0 else 0)) * 1.5 * abs(y_move) ** 1
-
     if self.is_moving:
         x = delta_orientation[0] * 1000
         y = delta_orientation[1] * 1000
-        if x * x + y * y > 8:
-          self.mouse_controller.move(x, y)  # finger mode
-        # mouse_controller.move(x_move, y_move)  # fist mode
+        # if x * x + y * y > 8:
+        #   self.mouse_controller.move(x, y)  # finger mode
 
     self.orientation_queue.clear()
     self.orientation_queue.append(copy.deepcopy(orientation))
@@ -110,11 +102,8 @@ class GestureDetector(TorchNode):
       self.is_moving = False
 
   def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
-    # print(data)
-    # print(data)
     self.update_orientation(data)
     self.imu_window.push(data.to_numpy())
-    # print(self.pinch_down)
     if self.counter.count(enable_print=True, print_fps=True) and self.imu_window.full():
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().T
                                   .reshape(1, 6, self.imu_window_length)).to(self.device)
@@ -135,14 +124,3 @@ class GestureDetector(TorchNode):
             for i in range(self.imu_window_length):
                 self.imu_window.push(self.imu_window.last())
             self.tap_counter += 1
-
-  # def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
-  #   self.imu_window.push(data)
-  #   orientation = pyq.Quaternion(
-  #     self.madgwick_filter.updateIMU(
-  #       self.last_orientation.elements,
-  #       gyr=[data.gyr_x, data.gyr_y, data.gyr_z],
-  #       acc=[data.acc_x, data.acc_y, data.acc_z],
-  #     )
-  #   )
-  #   position = np.array(orientation.rotate([1, 0, 0]))

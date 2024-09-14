@@ -6,8 +6,6 @@ from db_graph.utils.config import fill_value_by_name
 from db_zoo.node.algorithm.gesture_aggregator import GestureAggregator
 from db_zoo.node.device.ring import Ring
 from db_zoo.node.device.ringV2 import RingV2
-from db_zoo.node.device.tello import Tello
-from db_zoo.node.device.gshx_ar import GshxAR
 from db_zoo.node.visualizer.orientation_visualizer import OrientationVisualizer
 from gesture_detector import GestureDetector
 
