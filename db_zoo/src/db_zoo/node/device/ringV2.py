@@ -32,6 +32,9 @@ class NotifyProtocol():
   OPEN_MIC             = bytearray([0x00, 0x00, 0x71, 0x00, 0x01])
   CLOSE_MIC            = bytearray([0x00, 0x00, 0x71, 0x00, 0x00])
   GET_NFC              = bytearray([0x00, 0x00, 0x82, 0x00])
+  SET_TOUCH_SENSITIVITY= bytearray([0x00, 0x00, 0x84, 0x00])
+  GET_TOUCH_SENSITIVITY= bytearray([0x00, 0x00, 0x84, 0x01])
+  SYSTEM_RESET         = bytearray([0x00, 0x00, 0xf2, 0x09])
 
 class RingV2Action(Enum):
   DISCONNECT = 0
@@ -41,12 +44,25 @@ class RingV2Action(Enum):
   CLOSE_MIC = 4
   OPEN_IMU = 5
   CLOSE_IMU = 6
+  GET_BATTERY_STATUS = 7
+  GET_TOUCH_SENSITIVITY = 8
+  SYSTEM_RESET= 9
 
   def __str__(self):
     return self.name
   
   def from_str(s: str) -> RingV2Action:
     return RingV2Action.__members__[s]
+
+  def set_touch_sensitivity(      
+      ch0: int, ch1: int, ch2: int
+  ) -> bytearray:
+    data = NotifyProtocol.SET_TOUCH_SENSITIVITY
+    data += struct.pack('<B', ch0)
+    data += struct.pack('<B', ch1)
+    data += struct.pack('<B', ch2)
+    print(f"灵敏度参数：{data}")
+    return data
 
   def set_led_linear(
     red: bool,
@@ -208,6 +224,9 @@ class RingV2(Device):
       print('自定义灯结果')
     if data[2] == 0x62 and data[3] == 0x3:
       print('自定义灯pwm空闲结果')
+    
+    if data[2] == 0x84 and data[3] == 0x1:
+      print(f'ch0:{data[4]:02x}, ch1:{data[5]:02x}, ch2:{data[6]:02x}')
 
 
     if data[2] == 0x10 and data[3] == 0x0:
@@ -231,6 +250,7 @@ class RingV2(Device):
             time.time(),
         ))
     elif data[2] == 0x61 and data[3] == 0x0:
+      print(f"事件0x{data[4]:02x}")
       self.output(self.OUTPUT_EDGE_TOUCH, data[4])
     elif data[2] == 0x61 and data[3] == 0x1:
       self._detect_touch_events(data[5:])
@@ -281,3 +301,9 @@ class RingV2(Device):
           await self.write(NotifyProtocol.OPEN_6AXIS_IMU)
         elif action == RingV2Action.CLOSE_IMU:
           await self.write(NotifyProtocol.CLOSE_6AXIS_IMU)
+        elif action == RingV2Action.GET_BATTERY_STATUS:
+          await self.write(NotifyProtocol.GET_BATTERY_STATUS)
+        elif action == RingV2Action.GET_TOUCH_SENSITIVITY:
+          await self.write(NotifyProtocol.GET_TOUCH_SENSITIVITY)
+        elif action == RingV2Action.SYSTEM_RESET:
+          await self.write(NotifyProtocol.SYSTEM_RESET)

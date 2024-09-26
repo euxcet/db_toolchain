@@ -42,6 +42,9 @@ class Receiver(Node):
     self.focus = True
     self.mic_recording = True
     self.test_latency = 0
+    self.userInput = False
+    self.curCommand = ""
+    self.curParam = ""
 
   @override
   def start(self):
@@ -53,11 +56,13 @@ class Receiver(Node):
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.GET_BATTERY_LEVEL)
       time.sleep(60)
 
+
   def on_press(self, key) -> None:
     try:
       key = key.char
     except:
       key = key.name
+
     if key == 'f1':
       self.focus = not self.focus
     if not self.focus:
@@ -87,30 +92,66 @@ class Receiver(Node):
       self.first_battery_time = 0
     elif key == 'b':
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.GET_BATTERY_LEVEL)
+    elif key == 'z':
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.GET_BATTERY_STATUS)
     elif key == 'a':
+      interval = 200
+      start = 0
+      end = 8000
+      waveBreath = [i for i in range(start, end, interval)] + [i for i in range(end, start, -interval)]
       for data in RingV2Action.set_led_nonlinear(
-        wave = [100, 3000, 8000, 10000, 10000, 8000, 3000, 100],
+        #wave = [100, 3000, 8000, 10000, 10000, 8000, 3000, 100],
+        # wave = [9930, 9930, 9930, 9930],
+        wave = waveBreath, 
+        # wave = [0, 1000, 5000, 8000, 9000, 9500, 9900, 9950],
         red = True,
         green = False,
-        blue = True,
+        blue = False,
         pwd_max = 10000,
-        num_repeat = 20,
-        num_play = 3,
-        play_flag = 1,
+        num_repeat = 6,
+        num_play = 1,
+        play_flag = 2,
       ):
+        print(' '.join(f'{byte:02x}' for byte in data))
         self.output(self.OUTPUT_EDGE_ACTION, data)
     elif key == 's': #呼吸灯
-      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.set_led_linear(
-        red = False,
+      print(RingV2Action.set_led_linear(
+        red = True,
         green = True,
-        blue = False,
+        blue = True,
         pwd_max = 10000,
         num_repeat = 1,
         num_play = 3,
-        play_flag = 1,
+        play_flag = 2,
         sequence_len = 100,
         sequence_dir = 2,
       ))
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.set_led_linear(
+        red = True,
+        green = True,
+        blue = True,
+        pwd_max = 10000,
+        num_repeat = 1,
+        num_play = 3,
+        play_flag = 2,
+        sequence_len = 100,
+        sequence_dir = 2,
+      ))
+    elif key == 'q':
+      param = input("输入灵敏度：ch0 ch1 ch2")
+      print(f"param:`{param}`")
+      paras = map(int, param.strip().split(' '))
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.set_touch_sensitivity(
+        *paras
+      ))
+    elif key == 'w':
+      print("查询灵敏度：")
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.GET_TOUCH_SENSITIVITY)
+    elif key == 'r':
+      print("系统复位")
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.SYSTEM_RESET)
+
+
 
   def handle_input_edge_battery(self, data: float, timestamp: float) -> None:
     if data[0] == 0:
