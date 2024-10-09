@@ -116,10 +116,14 @@ class NotifyProtocol():
   def query_power_sync_ts() -> bytearray:
     data = bytearray(21)
     now_sec = int(time.time())
+    now_sec = 0
     data[17] = (now_sec >> 0) & 0xFF
     data[18] = (now_sec >> 8) & 0xFF
     data[19] = (now_sec >> 16) & 0xFF
     data[20] = (now_sec >> 24) & 0xFF
+    # for i in range(len(NotifyProtocol.fill_crc(data, NotifyProtocol.EDPT_QUERY_SS))):
+    #   print(data[i], end = ' ')
+    # print()
     return NotifyProtocol.fill_crc(data, NotifyProtocol.EDPT_QUERY_SS)
 
   def set_debug_hrbo(enable: int) -> bytearray:
@@ -217,6 +221,7 @@ class Ring(Device):
     self.lifecycle_status = DeviceLifeCircleEvent.on_create
     self.alive_window = Window(200)
     self.connected_time = 0
+    self.led_color = 'RGB'
 
   def check_alive(self, new_data: bool = False) -> None:
     if new_data:
@@ -278,7 +283,10 @@ class Ring(Device):
     while True:
       if self.client.is_connected:
         await self._perform_action()
-      await asyncio.sleep(0.2)
+      else:
+        break
+      await self.get_battery()
+      await asyncio.sleep(2)
       if not self.check_alive():
         break
     await self.reconnect_async()

@@ -18,6 +18,7 @@ class GestureDetector(TorchNode):
 
   INPUT_EDGE_IMU      = 'imu'
   INPUT_EDGE_TOUCH    = 'touch'
+  INPUT_EDGE_BATTERY    = 'battery'
   OUTPUT_EDGE_GESTURE = 'gesture'
   OUTPUT_EDGE_ORIENTATION = 'orientation'
 
@@ -63,6 +64,7 @@ class GestureDetector(TorchNode):
     self.butter_filter_x = ButterBandpassRealTimeFilter(200)
     self.butter_filter_y = ButterBandpassRealTimeFilter(200)
     self.mouse_controller = mouse.Controller()
+    self.mouse_press = False
 
   def update_orientation(self, data: IMUData) -> None:
     orientation = pyq.Quaternion(
@@ -87,19 +89,26 @@ class GestureDetector(TorchNode):
     delta_orientation = np.array(delta_orientation.yaw_pitch_roll)
 
     if self.is_moving:
-        x = delta_orientation[0] * 1000
-        y = delta_orientation[1] * 1000
-        # if x * x + y * y > 8:
-        #   self.mouse_controller.move(x, y)  # finger mode
+        x = delta_orientation[0] * 800
+        y = -delta_orientation[1] * 800
+        if x * x + y * y > 3:
+          ...
+          # self.mouse_controller.move(x, y)  # finger mode
 
     self.orientation_queue.clear()
     self.orientation_queue.append(copy.deepcopy(orientation))
 
-  def handle_input_edge_touch(self, data: int, timestamp: float) -> None:
-    if data == 9:
-      self.is_moving = True
-    elif data == 10:
-      self.is_moving = False
+  def handle_input_edge_battery(self, battery: int, timestamp: float) -> None:
+    print('Battery:', battery)
+
+  def handle_input_edge_touch(self, data: int|str, timestamp: float) -> None:
+    if data == 'double_click':
+      self.mouse_controller.position = (500, 500)
+    if self.mouse_press:
+      self.mouse_controller.release(mouse.Button.left)
+    else:
+      self.mouse_controller.press(mouse.Button.left)
+    self.mouse_press = not self.mouse_press
 
   def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
     self.update_orientation(data)
@@ -112,8 +121,6 @@ class GestureDetector(TorchNode):
       confidence = output_tensor[0][gesture_id].item()
       if confidence > self.confidence_threshold:
         self.gesture_window.push(gesture_id)
-        if gesture_id != 0:
-            print(self.labels[gesture_id])
         if self.labels[gesture_id] == 'pinch_down':
             self.pinch_down = True
         elif self.labels[gesture_id] in ['pinch', 'pinch_up']:

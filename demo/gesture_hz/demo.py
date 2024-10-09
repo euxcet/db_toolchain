@@ -16,6 +16,7 @@ def run():
   args = parser.parse_args()
 
   config = load_config(args.config)
+  fill_value_by_name(config, 'Ring', 'address', args.ring)
   fill_value_by_name(config, 'RingV2', 'address', args.ring)
   Graph(config).run()
 

@@ -2,6 +2,7 @@ devices:
   - type: RingV2
     name: RingV2
     address: D029833A-E1B7-5520-F242-D08B78F90D4D
+    drift: [0.44, 0.23, -0.03]
 
 nodes:
   - type: GestureDetector

@@ -10,6 +10,7 @@ nodes:
     input_edges:
       imu: Ring_imu
       touch: Ring_touch
+      battery: Ring_battery
     output_edges:
       gesture: gesture
     num_classes: 44

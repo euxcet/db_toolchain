@@ -116,6 +116,7 @@ class RingV2(Device):
       address: str,
       input_edges: dict[str, str] = {},
       output_edges: dict[str, str] = {},
+      drift: list[float] = [0, 0, 0],
       adapter: str = None,
       imu_freq: int = 200,
       enable_imu: bool = True,
@@ -137,6 +138,7 @@ class RingV2(Device):
     self.quiet_log = quiet_log
     self.led_color = led_color
     self.taped = False
+    self.drift = drift
     self.touch_type = -1
     self.tap_thread = Thread(target=self.tap_func)
     self.tap_thread.daemon = True
@@ -257,8 +259,8 @@ class RingV2(Device):
         acc_x, acc_y, acc_z = acc_x / 1000 * 9.8, acc_y / 1000 * 9.8, acc_z / 1000 * 9.8
         gyr_x, gyr_y, gyr_z = gyr_x / 180 * math.pi,  gyr_y / 180 * math.pi, gyr_z / 180 * math.pi
         self.output(self.OUTPUT_EDGE_IMU, IMUData(
-            acc_y, acc_z, acc_x,
-            gyr_y, gyr_z, gyr_x,
+            -acc_y, acc_z, -acc_x,
+            -gyr_y - self.drift[0], gyr_z - self.drift[1], -gyr_x - self.drift[2],
             time.time(),
         ))
     elif data[2] == 0x61 and data[3] == 0x0:
@@ -292,6 +294,7 @@ class RingV2(Device):
         1 if data[1] & 0x08 else 0,
         1 if data[1] & 0x20 else 0),
       time.time(), ]
+    print(new_touch)
     self.touch_history.append(new_touch)
     if new_touch[0] == 0:
       if not self.is_holding and len(self.touch_history) > 1:
