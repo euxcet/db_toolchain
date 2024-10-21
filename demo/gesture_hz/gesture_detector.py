@@ -92,8 +92,8 @@ class GestureDetector(TorchNode):
         x = delta_orientation[0] * 800
         y = -delta_orientation[1] * 800
         if x * x + y * y > 3:
-          ...
-          # self.mouse_controller.move(x, y)  # finger mode
+          # ...
+          self.mouse_controller.move(x, y)  # finger mode
 
     self.orientation_queue.clear()
     self.orientation_queue.append(copy.deepcopy(orientation))

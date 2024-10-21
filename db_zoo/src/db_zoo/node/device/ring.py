@@ -270,13 +270,14 @@ class Ring(Device):
     await self.client.start_notify(NotifyProtocol.SPP_READ_CHARACTERISTIC, self.spp_notify_callback)
     await self.client.start_notify(NotifyProtocol.NOTIFY_CHARACTERISTIC, self.notify_callback)
     await self.client.write_gatt_char(NotifyProtocol.NOTIFY_CHARACTERISTIC, NotifyProtocol.do_op_touch_action(1, 1, 0))
+
     await self.spp_write('ENSPP')
     await self.spp_write('ENFAST')
     await self.spp_write('TPOPS=' + '1,1,1' if self.enable_touch else '0,0,0')
     if self.enable_imu:
       await self.spp_write('IMUARG=0,0,0,' + str(self.imu_freq))
       await self.spp_write('ENDB6AX')
-    await self.set_led_color(self.led_color)
+    await self.set_led_color('G')
     self.on_connect()
     self.check_alive(new_data=True)
 
@@ -336,7 +337,8 @@ class Ring(Device):
 
   async def spp_write(self, str) -> None:
     if str is not None:
-      await self.client.write_gatt_char(NotifyProtocol.SPP_WRITE_CHARACTERISTIC, bytearray(str + '\r\n', encoding='utf-8'))
+      await self.client.write_gatt_char(NotifyProtocol.SPP_WRITE_CHARACTERISTIC, bytearray(str, encoding='utf-8'))
+      # await self.client.write_gatt_char(NotifyProtocol.SPP_WRITE_CHARACTERISTIC, bytearray(str + '\r\n', encoding='utf-8'))
       await asyncio.sleep(0.5) # reduce waiting time?
 
   async def notify_write(self, bytes) -> None:
