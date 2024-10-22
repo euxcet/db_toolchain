@@ -13,7 +13,7 @@ from db_zoo.model.word_resnet_model import ResNet, TCNLSTM
 from ahrs.filters import Madgwick
 from enum import Enum, auto
 from madgwick_helper import MadgwickHelper
-
+from post_to_google_ime import get_character
 from pynput import mouse
 
 class State(Enum):
@@ -108,6 +108,8 @@ class GestureDetector(TorchNode):
     self.hx = (torch.zeros(1, 1, 128), torch.zeros(1, 1, 128))
     self.madgwick_helper = MadgwickHelper()
     self.last_state = State.STATE_UP
+    self.position_x = 0
+    self.position_y = 0
     self.trajectory = []
 
   def handle_input_edge_battery(self, battery: int, timestamp: float) -> None:
@@ -132,7 +134,8 @@ class GestureDetector(TorchNode):
       return 0
 
   def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
-    data.gyr_x += 0.04
+    data.gyr_x -= -0.04
+    data.gyr_y -= 0
     data.gyr_z -= 0.04
 
     self.imu_window.push(data.to_numpy())
@@ -161,17 +164,27 @@ class GestureDetector(TorchNode):
           self.tap_counter += 1
       
       current_state = self.automaton.get_state()
-      if current_state == State.STATE_DOWN:
+      if current_state == State.STATE_DOWN and self.last_state == State.STATE_UP: # DOWN
+        print('DOWN')
+      elif current_state == State.STATE_UP and self.last_state == State.STATE_DOWN: # UP
+        print('UP')
+        get_character(self.trajectory)
+        self.trajectory = []
+        self.position_x, self.position_y = 0, 0
+      if current_state == State.STATE_DOWN: # MOVE
         input_tensor = torch.tensor(self.move_imu_window.to_numpy_float()
                             .reshape(1, 13, 6)).to(self.device)
         output_tensor, self.hx = self.move_model(input_tensor, self.hx)
         output_tensor = output_tensor.detach().cpu().numpy()
-        x, y = output_tensor[0][0][0], output_tensor[0][0][1]
+
+
+        dx, dy = output_tensor[0][0][0], output_tensor[0][0][1]
         if data.gyr_norm < 0.1:
-          x, y = 0, 0
-        self.trajectory.append((x, y))
-        self.mouse_controller.move(x, y)
-      elif current_state == State.STATE_UP and self.last_state == State.STATE_DOWN:
-        print(self.trajectory)
-        self.trajectory = []
+          dx, dy = 0, 0
+
+        self.position_x += dx
+        self.position_y += dy
+        
+        self.trajectory.append((self.position_x, self.position_y, int(time.time() * 1e6)))
+        # self.mouse_controller.move(dx, dy)
       self.last_state = current_state
