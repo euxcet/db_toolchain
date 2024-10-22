@@ -1,5 +1,17 @@
+import os
+import time
 import numpy as np
 import requests
+from PIL import Image, ImageDraw
+
+def save_image(data: np.ndarray, width: int, height: int) -> None:
+    os.makedirs('result', exist_ok=True)
+    canvas = Image.new('RGB', (width, height), (0, 0, 0))
+    draw = ImageDraw.Draw(canvas)
+    for i in range(0, data.shape[1] - 1):
+        draw.line([(data[0][i], data[1][i]), (data[0][i + 1], data[1][i + 1])], fill=(255, 255, 255), width=1)
+    canvas.show()
+    canvas.save('result/' + str(time.time()) + '.jpg')
 
 def get_character(data: list):
     SCALE = 1
@@ -15,6 +27,8 @@ def get_character(data: list):
     data[1] = data[1] - (data[1].min() - PADDING)
     width = int(data[0].max() + PADDING)
     height = int(data[1].max() + PADDING)
+
+    save_image(data, width, height)
 
     cookies = {
         "HSID": "A_PlfHP_YK9-9a36P",
