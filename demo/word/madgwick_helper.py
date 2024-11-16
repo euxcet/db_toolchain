@@ -24,7 +24,7 @@ class IntegralValue:
 class MadgwickHelper:
     def __init__(self, q0: np.ndarray=np.array([1, 0, 0, 0]), Dt=1/200, auto_start_calibration=True) -> None:
         self.madgwick_filter = Madgwick(Dt=Dt) if not auto_start_calibration else None
-        self.start_orientation_queue = deque(maxlen=100)
+        self.start_orientation_queue = deque(maxlen=1)
         self.Dt= Dt
         self.orientation = q0
         self.prev_orientation = q0
@@ -60,18 +60,18 @@ class MadgwickHelper:
             unit: [m/s^2, m/s^2, m/s^2, rad/s, rad/s, rad/s]
         '''
         self.data = data
-        self.data_without_gravity = self.cal_data_without_gravity()
         # filter
         # self.data_without_gravity = median_filter(self.data_without_gravity, size=3)
-        self.data_without_gravity_world = self.cal_data_without_gravity_world() # with acc in world coordinate
 
         if not self.madgwick_filter:
+            self.start_orientation_queue.append(data)
             if len(self.start_orientation_queue) < self.start_orientation_queue.maxlen:
-                self.start_orientation_queue.append(data)
                 return self.orientation
             accumulated_imu_data = np.array(self.start_orientation_queue)
             self.madgwick_filter = Madgwick(Dt=self.Dt, acc=accumulated_imu_data[:, :3], gyr=accumulated_imu_data[:, 3:])
             self.orientation = self.madgwick_filter.Q[-1]
+            self.data_without_gravity = self.cal_data_without_gravity()
+            self.data_without_gravity_world = self.cal_data_without_gravity_world() # with acc in world coordinate
             return self.orientation
         
         self.prev_orientation = deepcopy(self.orientation)
@@ -92,6 +92,9 @@ class MadgwickHelper:
             self.vx.reset_value()
             self.vy.reset_value()
             self.vz.reset_value()
+
+        self.data_without_gravity = self.cal_data_without_gravity()
+        self.data_without_gravity_world = self.cal_data_without_gravity_world() # with acc in world coordinate
 
         return self.orientation
     

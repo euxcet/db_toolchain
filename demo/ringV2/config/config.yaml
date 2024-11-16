@@ -13,6 +13,8 @@ detectors:
       touch: RingV2_TOUCH
       touch_raw: RingV2_TOUCH_RAW
       battery: RingV2_BATTERY
+      ppg_r: RingV2_PPG_R
+      ppg_g: RingV2_PPG_G
     output_edges:
       action: ACTION
   - type: ImuVisualizer

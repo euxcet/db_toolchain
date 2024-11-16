@@ -2,7 +2,9 @@ import os
 import time
 import numpy as np
 import requests
+import json
 from PIL import Image, ImageDraw
+import flask
 
 def save_image(data: np.ndarray, width: int, height: int) -> None:
     os.makedirs('result', exist_ok=True)
@@ -107,7 +109,7 @@ def get_character(data: list):
         json=json_data,
     )
 
-    print(response.text)
+    print(json.loads(response.text)[1][0][1])
 
 if __name__ == '__main__':
-    get_character([])
+    get_character([[0, 0, 0], [0, 2, 0.04], [0, 4, 0.04]])

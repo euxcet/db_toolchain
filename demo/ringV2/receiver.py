@@ -18,6 +18,8 @@ class Receiver(Node):
   INPUT_EDGE_TOUCH = 'touch'
   INPUT_EDGE_TOUCH_RAW = 'touch_raw'
   INPUT_EDGE_BATTERY = 'battery'
+  INPUT_EDGE_PPG_G = 'ppg_g'
+  INPUT_EDGE_PPG_R = 'ppg_r'
   OUTPUT_EDGE_ACTION = 'action'
 
   def __init__(
@@ -43,6 +45,9 @@ class Receiver(Node):
     self.mic_recording = True
     self.audio = bytearray()
     self.test_latency = 0
+    self.ppg_file = None
+    self.ppg_start = 0
+    self.ppg_counter = 1
 
   @override
   def start(self):
@@ -112,6 +117,45 @@ class Receiver(Node):
         sequence_len = 100,
         sequence_dir = 2,
       ))
+    elif key == 'p':
+      self.ppg_file = open('ppg_r.bin', 'wb')
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.open_ppg_red(time=120, freq=25, ))
+      # self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.OPEN_PPG_R)
+    elif key == '[':
+      self.ppg_start = 0
+      if self.ppg_file is not None:
+        self.ppg_file.close()
+        self.ppg_file = None
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.CLOSE_PPG_R)
+    elif key == '0':
+      self.ppg_file = open('ppg_g.bin', 'wb')
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.open_ppg_green(time=120, freq=25,))
+      # self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.OPEN_PPG_G)
+    elif key == '-':
+      self.ppg_start = 0
+      if self.ppg_file is not None:
+        self.ppg_file.close()
+        self.ppg_file = None
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.CLOSE_PPG_G)
+    
+  def count_ppg(self):
+    if self.ppg_start == 0:
+      self.ppg_start = time.time()
+      self.ppg_counter = 0
+    else:
+      self.ppg_counter += 1
+      if self.ppg_counter % 100 == 0:
+        self.log_info(f'PPG freq: {self.ppg_counter / (time.time() - self.ppg_start)}')
+
+  def handle_input_edge_ppg_g(self, data, timestamp: float) -> None:
+    self.count_ppg()
+    if self.ppg_file is not None:
+      self.ppg_file.write(data)
+
+  def handle_input_edge_ppg_r(self, data, timestamp: float) -> None:
+    self.count_ppg()
+    if self.ppg_file is not None:
+      self.ppg_file.write(data)
 
   def handle_input_edge_battery(self, data: float, timestamp: float) -> None:
     if data[0] == 0:

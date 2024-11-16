@@ -34,6 +34,16 @@ class NotifyProtocol():
   OPEN_MIC             = bytearray([0x00, 0x00, 0x71, 0x00, 0x01])
   CLOSE_MIC            = bytearray([0x00, 0x00, 0x71, 0x00, 0x00])
   GET_NFC              = bytearray([0x00, 0x00, 0x82, 0x00])
+  # 100hz
+  OPEN_PPG_G           = bytearray([0x00, 0x00, 0x31, 0x00, 0x1e, 0x02, 0x02, 0x01, 0x01])
+  # 50hz
+  # OPEN_PPG_G           = bytearray([0x00, 0x0b, 0x31, 0x00, 0x1e, 0x01, 0x02, 0x01, 0x01])
+  CLOSE_PPG_G          = bytearray([0x00, 0x00, 0x31, 0x02])
+  # 100hz
+  OPEN_PPG_R           = bytearray([0x00, 0x00, 0x32, 0x00, 0x1e, 0x02, 0x01, 0x01])
+  # 50hz
+  # OPEN_PPG_R           = bytearray([0x00, 0x0b, 0x32, 0x00, 0x1e, 0x02, 0x02, 0x01])
+  CLOSE_PPG_R          = bytearray([0x00, 0x00, 0x32, 0x02])
 
 class RingV2Action(Enum):
   DISCONNECT = 0
@@ -43,12 +53,36 @@ class RingV2Action(Enum):
   CLOSE_MIC = 4
   OPEN_IMU = 5
   CLOSE_IMU = 6
+  OPEN_PPG_G = 7
+  CLOSE_PPG_G = 8
+  OPEN_PPG_R = 9
+  CLOSE_PPG_R = 10
 
   def __str__(self):
     return self.name
   
   def from_str(s: str) -> RingV2Action:
     return RingV2Action.__members__[s]
+
+  def open_ppg_green(time: int, freq: int, waveform: bool = True, progress: bool = True, rr: bool = True):
+    if freq == 25:
+      freq = 0
+    elif freq == 50:
+      freq = 1
+    elif freq == 100:
+      freq = 2
+    data = bytearray([0x00, 0x00, 0x31, 0x00, time, freq, int(waveform), int(progress), int(rr)])
+    return data
+
+  def open_ppg_red(time: int, freq: int, waveform: bool = True, progress: bool = True):
+    if freq == 25:
+      freq = 0
+    elif freq == 50:
+      freq = 1
+    elif freq == 100:
+      freq = 2
+    data = bytearray([0x00, 0x00, 0x32, 0x00, time, freq, int(waveform), int(progress)])
+    return data
 
   def set_led_linear(
     red: bool,
@@ -108,6 +142,8 @@ class RingV2(Device):
   OUTPUT_EDGE_TOUCH     = 'touch'
   OUTPUT_EDGE_TOUCH_RAW = 'touch_raw'
   OUTPUT_EDGE_BATTERY   = 'battery'
+  OUTPUT_EDGE_PPG_G     = 'ppg_g'
+  OUTPUT_EDGE_PPG_R     = 'ppg_r'
 
   def __init__(
       self,
@@ -198,6 +234,7 @@ class RingV2(Device):
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_error)
 
   async def write(self, data: bytearray) -> None:
+    print('write', data)
     await self.client.write_gatt_char(NotifyProtocol.WRITE_CHARACTERISTIC, data)
 
   async def connect_async(self) -> None:
@@ -254,10 +291,17 @@ class RingV2(Device):
     elif data[2] == 0x12 and data[3] == 0x1:
       self.output(self.OUTPUT_EDGE_BATTERY, (1, data[4]))
     elif data[2] == 0x40 and data[3] == 0x06:
+      last_x = 0
+      count = 0
       for index in range(5, len(data), 12):
         acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z = struct.unpack('<hhhhhh', data[index:index+12])
         acc_x, acc_y, acc_z = acc_x / 1000 * 9.8, acc_y / 1000 * 9.8, acc_z / 1000 * 9.8
         gyr_x, gyr_y, gyr_z = gyr_x / 180 * math.pi,  gyr_y / 180 * math.pi, gyr_z / 180 * math.pi
+        count += 1
+        if count == 5:
+          print(gyr_x)
+          gyr_x = last_x
+        last_x = gyr_x
         self.output(self.OUTPUT_EDGE_IMU, IMUData(
             -acc_y, acc_z, -acc_x,
             -gyr_y - self.drift[0], gyr_z - self.drift[1], -gyr_x - self.drift[2],
@@ -272,6 +316,24 @@ class RingV2(Device):
     elif data[2] == 0x71 and data[3] == 0x0:
       length, seq = struct.unpack('<hi', data[4:10])
       self.output(self.OUTPUT_EDGE_MIC, (length, seq, data[10:]))
+    elif data[2] == 0x31 and data[3] == 0x00:
+      ...
+      # print(data)
+    elif data[2] == 0x31 and data[3] == 0x01:
+      seq = data[4]
+      num = data[5]
+      for i in range(num):
+        offset = 6 + 10 * i
+        self.output(self.OUTPUT_EDGE_PPG_G, data[offset : offset + 3])
+    elif data[2] == 0x32 and data[3] == 0x00:
+      ...
+      # print(data)
+    elif data[2] == 0x32 and data[3] == 0x01:
+      seq = data[4]
+      num = data[5]
+      for i in range(num):
+        offset = 6 + 14 * i
+        self.output(self.OUTPUT_EDGE_PPG_R, data[offset : offset + 7])
 
   def handle_input_edge_action(self, data: RingV2Action|bytearray, timestamp: float) -> None:
     self.action_queue.put(data)
@@ -294,7 +356,6 @@ class RingV2(Device):
         1 if data[1] & 0x08 else 0,
         1 if data[1] & 0x20 else 0),
       time.time(), ]
-    print(new_touch)
     self.touch_history.append(new_touch)
     if new_touch[0] == 0:
       if not self.is_holding and len(self.touch_history) > 1:
@@ -357,6 +418,14 @@ class RingV2(Device):
           await self.write(NotifyProtocol.OPEN_6AXIS_IMU)
         elif action == RingV2Action.CLOSE_IMU:
           await self.write(NotifyProtocol.CLOSE_6AXIS_IMU)
+        elif action == RingV2Action.OPEN_PPG_G:
+          await self.write(NotifyProtocol.OPEN_PPG_G)
+        elif action == RingV2Action.CLOSE_PPG_G:
+          await self.write(NotifyProtocol.CLOSE_PPG_G)
+        elif action == RingV2Action.OPEN_PPG_R:
+          await self.write(NotifyProtocol.OPEN_PPG_R)
+        elif action == RingV2Action.CLOSE_PPG_R:
+          await self.write(NotifyProtocol.CLOSE_PPG_R)
 
 # up 9.8 0 0
 # down -9.8 0 0

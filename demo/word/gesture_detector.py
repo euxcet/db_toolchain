@@ -1,6 +1,7 @@
 import time
 import copy
 import torch
+from scipy.spatial.transform import Rotation as Rtool
 from collections import deque
 import torch.nn.functional as F
 import numpy as np
@@ -15,6 +16,7 @@ from enum import Enum, auto
 from madgwick_helper import MadgwickHelper
 from post_to_google_ime import get_character
 from pynput import mouse
+from torch.utils.mobile_optimizer import optimize_for_mobile
 
 class State(Enum):
     STATE_UP = auto()  # 在空中
@@ -87,9 +89,10 @@ class GestureDetector(TorchNode):
         kernel_size=3,
         dropout=0.1,
     ) 
+
+    self.model.eval()
     self.move_model.load_state_dict(torch.load('checkpoint/move.pt'))
     self.move_model.eval()
-
     self.imu_window_length = imu_window_length
     self.num_classes = num_classes
     self.labels = labels
@@ -106,11 +109,31 @@ class GestureDetector(TorchNode):
     self.automaton = Automaton()
     self.mouse_controller = mouse.Controller()
     self.hx = (torch.zeros(1, 1, 128), torch.zeros(1, 1, 128))
-    self.madgwick_helper = MadgwickHelper()
+    self.madgwick_helper = MadgwickHelper(q0=np.array([0.012, -0.825, 0.538, 0.174]))
     self.last_state = State.STATE_UP
     self.position_x = 0
     self.position_y = 0
     self.trajectory = []
+    self.test()
+
+  def test(self):
+    for i in range(40):
+      self.move_imu_window.push((0, 0, 0, 0, 0, 0))
+    for i in range(1, 40):
+      d = np.array([i, 2 * i, 3 * i, 4 * i, 5 * i, 6 * i])
+      self.imu_window.push(d)
+      orientation = self.madgwick_helper.update(d)
+      print('ori', orientation)
+      without_gravity = self.madgwick_helper.data_without_gravity
+      print('without', without_gravity)
+      self.move_imu_window.push(np.array(without_gravity))
+      input_tensor = torch.tensor(self.move_imu_window.to_numpy_float()
+                    .reshape(1, 13, 6)).to(self.device)
+      output_tensor, self.hx = self.move_model(input_tensor, self.hx)
+      output_tensor = output_tensor.detach().cpu().numpy()
+      print(output_tensor)
+
+
 
   def handle_input_edge_battery(self, battery: int, timestamp: float) -> None:
     ...
@@ -134,16 +157,20 @@ class GestureDetector(TorchNode):
       return 0
 
   def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
-    data.gyr_x -= -0.04
-    data.gyr_y -= 0
-    data.gyr_z -= 0.04
+
+    print(data)
 
     self.imu_window.push(data.to_numpy())
+
     self.imu_x_window.push(data.to_numpy()[0])
 
-    self.madgwick_helper.update(self.imu_window.last())
+    orientation = self.madgwick_helper.update(self.imu_window.last())
     without_gravity = self.madgwick_helper.data_without_gravity
+
+    print(without_gravity[0], without_gravity[1], without_gravity[2])
+
     self.move_imu_window.push(np.array(without_gravity))
+
 
     if self.counter.count(enable_print=True, print_fps=True) and self.imu_window.full():
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().T
@@ -171,6 +198,7 @@ class GestureDetector(TorchNode):
         get_character(self.trajectory)
         self.trajectory = []
         self.position_x, self.position_y = 0, 0
+
       if current_state == State.STATE_DOWN: # MOVE
         input_tensor = torch.tensor(self.move_imu_window.to_numpy_float()
                             .reshape(1, 13, 6)).to(self.device)
@@ -186,5 +214,11 @@ class GestureDetector(TorchNode):
         self.position_y += dy
         
         self.trajectory.append((self.position_x, self.position_y, int(time.time() * 1e6)))
-        # self.mouse_controller.move(dx, dy)
+        self.mouse_controller.move(dx, dy)
       self.last_state = current_state
+
+
+# Acc [x: -10.00  y: 0.59  z: -0.00]  Gyr[x: -0.00  y: -0.00  z: -0.00]  Timestamp 1730383040.13
+# -8.179893314484882 10.177542356403764 0.00582250508053896
+# Acc [x: -9.83  y: 0.60  z: 0.01]  Gyr[x: -0.00  y: -0.00  z: -0.00]  Timestamp 1730383040.13
+# -8.011152366466629 10.18693655668585 0.01576995655791095

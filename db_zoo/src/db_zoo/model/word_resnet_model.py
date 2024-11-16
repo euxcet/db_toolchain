@@ -404,7 +404,15 @@ class TCNLSTM(nn.Module):
         self.fc1 = nn.Linear(hidden_size, hidden_size // 2)
         self.fc2 = nn.Linear(hidden_size // 2, output_size)
 
-    def forward(self, x, hx=None):
+    # def forward(self, x, hx):
+    #     # x:(b, n, 9)
+    #     output = self.tcn(x.transpose(1, 2)).transpose(1, 2)
+    #     output, next_hx = self.lstm(output, hx)
+    #     output = F.relu(self.fc1(output))
+    #     output = self.fc2(output)
+    #     return output, next_hx
+
+    def forward(self, x, hx = None):
         # x:(b, n, 9)
         # TCN layer
         output = self.tcn(x.transpose(1, 2)).transpose(1, 2)
@@ -413,9 +421,9 @@ class TCNLSTM(nn.Module):
         # Fully connected layer
         output = F.relu(self.fc1(output))
         output = self.fc2(output)
-        if hx is not None:
-            return output, next_hx
-        return output
+        # if hx is not None:
+        #     return output, next_hx
+        return output, next_hx
 
 
 class BasicBlock(nn.Module):
