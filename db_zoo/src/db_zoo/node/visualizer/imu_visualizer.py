@@ -30,13 +30,18 @@ class ImuVisualizer(Node):
     self.plotter = MultiPlotter()
     self.buffer = [deque(maxlen=400) for _ in range(6)]
     for i in range(6):
+        if (i < 3):
+          y_range = (-20, 20)
+        else:
+          y_range = (-50, 50)
+
         self.plotter.add_single_line_plotter(
             row=i // 3,
             col=i % 3,
             size=400,
             data_buffer=self.buffer[i],
             x_range=(0, 400),
-            y_range=(-20, 20)
+            y_range=y_range
         )
 
   @override
@@ -49,9 +54,9 @@ class ImuVisualizer(Node):
     app.run()
 
   def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
-    self.buffer[0].append(data.acc_x)
-    self.buffer[1].append(data.acc_y)
-    self.buffer[2].append(data.acc_z)
+    self.buffer[0].append(data.acc_x / 9.8)
+    self.buffer[1].append(data.acc_y / 9.8)
+    self.buffer[2].append(data.acc_z / 9.8)
     self.buffer[3].append(data.gyr_x)
     self.buffer[4].append(data.gyr_y)
     self.buffer[5].append(data.gyr_z)

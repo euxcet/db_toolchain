@@ -44,6 +44,8 @@ class NotifyProtocol():
   # 50hz
   # OPEN_PPG_R           = bytearray([0x00, 0x0b, 0x32, 0x00, 0x1e, 0x02, 0x02, 0x01])
   CLOSE_PPG_R          = bytearray([0x00, 0x00, 0x32, 0x02])
+  GET_TOUCH_SEN        = bytearray([0x00, 0x00, 0x84, 0x01])
+  SET_TOUCH_SEN        = bytearray([0x00, 0x00, 0x84, 0x00, 15, 15, 15])
 
 class RingV2Action(Enum):
   DISCONNECT = 0
@@ -57,12 +59,17 @@ class RingV2Action(Enum):
   CLOSE_PPG_G = 8
   OPEN_PPG_R = 9
   CLOSE_PPG_R = 10
+  GET_TOUCH_SEN = 11
+  SET_TOUCH_SEN = 12
 
   def __str__(self):
     return self.name
   
   def from_str(s: str) -> RingV2Action:
     return RingV2Action.__members__[s]
+
+  def set_touch_sen(x: int, y: int, z: int) -> bytearray:
+    return bytearray([0x00, 0x00, 0x84, 0x00, x, y, z])
 
   def open_ppg_green(time: int, freq: int, waveform: bool = True, progress: bool = True, rr: bool = True):
     if freq == 25:
@@ -299,7 +306,7 @@ class RingV2(Device):
         gyr_x, gyr_y, gyr_z = gyr_x / 180 * math.pi,  gyr_y / 180 * math.pi, gyr_z / 180 * math.pi
         count += 1
         if count == 5:
-          print(gyr_x)
+          # print(gyr_x)
           gyr_x = last_x
         last_x = gyr_x
         self.output(self.OUTPUT_EDGE_IMU, IMUData(
@@ -313,6 +320,10 @@ class RingV2(Device):
     elif data[2] == 0x61 and data[3] == 0x1:
       self._detect_touch_events(data[5:])
       self.output(self.OUTPUT_EDGE_TOUCH_RAW, (data[4], data[5:]))
+
+    elif data[2] == 0x61 and data[3] == 0x2:
+      print('Touch:', ['TAP', 'LONG_PRESS', 'DOUBLE_TAP', 'DOWN', 'UP'][data[4]])
+
     elif data[2] == 0x71 and data[3] == 0x0:
       length, seq = struct.unpack('<hi', data[4:10])
       self.output(self.OUTPUT_EDGE_MIC, (length, seq, data[10:]))
@@ -334,6 +345,9 @@ class RingV2(Device):
       for i in range(num):
         offset = 6 + 14 * i
         self.output(self.OUTPUT_EDGE_PPG_R, data[offset : offset + 7])
+    elif data[2] == 0x84:
+      if (len(data) == 7):
+        print('Sensitivity', data[4], data[5], data[6])
 
   def handle_input_edge_action(self, data: RingV2Action|bytearray, timestamp: float) -> None:
     self.action_queue.put(data)
@@ -347,6 +361,7 @@ class RingV2(Device):
     # 5: 101 -> -1
     # 6: 110 -> 4
     # 7: 111 -> -2
+    print(x, y, z)
     return [0, 1, 3, 2, 5, -1, 4, -2][x * 4 + y * 2 + z]
 
   def _detect_touch_events(self, data: bytearray) -> None:
@@ -426,6 +441,10 @@ class RingV2(Device):
           await self.write(NotifyProtocol.OPEN_PPG_R)
         elif action == RingV2Action.CLOSE_PPG_R:
           await self.write(NotifyProtocol.CLOSE_PPG_R)
+        elif action == RingV2Action.GET_TOUCH_SEN:
+          await self.write(NotifyProtocol.GET_TOUCH_SEN)
+        elif action == RingV2Action.SET_TOUCH_SEN:
+          await self.write(NotifyProtocol.SET_TOUCH_SEN)
 
 # up 9.8 0 0
 # down -9.8 0 0

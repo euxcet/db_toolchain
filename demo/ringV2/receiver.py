@@ -119,7 +119,7 @@ class Receiver(Node):
       ))
     elif key == 'p':
       self.ppg_file = open('ppg_r.bin', 'wb')
-      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.open_ppg_red(time=120, freq=25, ))
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.open_ppg_red(time=120, freq=100, ))
       # self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.OPEN_PPG_R)
     elif key == '[':
       self.ppg_start = 0
@@ -129,7 +129,7 @@ class Receiver(Node):
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.CLOSE_PPG_R)
     elif key == '0':
       self.ppg_file = open('ppg_g.bin', 'wb')
-      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.open_ppg_green(time=120, freq=25,))
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.open_ppg_green(time=120, freq=100,))
       # self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.OPEN_PPG_G)
     elif key == '-':
       self.ppg_start = 0
@@ -137,6 +137,15 @@ class Receiver(Node):
         self.ppg_file.close()
         self.ppg_file = None
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.CLOSE_PPG_G)
+    elif key == '5':
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.GET_TOUCH_SEN)
+    elif key == '6':
+      self.focus = False
+      s = input('Sensibility:')
+      s = s.strip().split('#')[-1]
+      x, y, z = list(map(int, s.split(',')))
+      self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.set_touch_sen(x, y, z))
+      self.focus = True
     
   def count_ppg(self):
     if self.ppg_start == 0:
@@ -153,6 +162,7 @@ class Receiver(Node):
       self.ppg_file.write(data)
 
   def handle_input_edge_ppg_r(self, data, timestamp: float) -> None:
+    print(data[0], data[1], data[2])
     self.count_ppg()
     if self.ppg_file is not None:
       self.ppg_file.write(data)
@@ -186,6 +196,7 @@ class Receiver(Node):
     print('Touch Event', data)
 
   def handle_input_edge_touch_raw(self, data: tuple, timestamp: float) -> None:
+    print(data)
     length, bytes = data
     channel = ((bytes[1] & 0x02) > 0, (bytes[1] & 0x8) > 0, (bytes[1] & 0x20) > 0)
 
