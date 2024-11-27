@@ -102,11 +102,14 @@ class GestureDetector(TorchNode):
     print('Battery:', battery)
 
   def handle_input_edge_touch(self, data: int|str, timestamp: float) -> None:
+    print('Input', data, self.mouse_press)
     if data == 'double_click':
       self.mouse_controller.position = (500, 500)
     if self.mouse_press:
+      print('release')
       self.mouse_controller.release(mouse.Button.left)
     else:
+      print('press')
       self.mouse_controller.press(mouse.Button.left)
     self.mouse_press = not self.mouse_press
 

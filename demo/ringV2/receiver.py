@@ -196,9 +196,9 @@ class Receiver(Node):
     print('Touch Event', data)
 
   def handle_input_edge_touch_raw(self, data: tuple, timestamp: float) -> None:
-    print(data)
-    length, bytes = data
-    channel = ((bytes[1] & 0x02) > 0, (bytes[1] & 0x8) > 0, (bytes[1] & 0x20) > 0)
+    pass
+    # length, bytes = data
+    # channel = ((bytes[1] & 0x02) > 0, (bytes[1] & 0x8) > 0, (bytes[1] & 0x20) > 0)
 
   def save_audio(self):
     try:

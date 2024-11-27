@@ -257,6 +257,7 @@ class Ring(Device):
 
   # active control
   async def connect_async(self) -> None:
+    return
     self.connected_time = 0
     self.alive_window.clear()
     self.on_pair()

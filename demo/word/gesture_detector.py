@@ -91,7 +91,7 @@ class GestureDetector(TorchNode):
     ) 
 
     self.model.eval()
-    self.move_model.load_state_dict(torch.load('checkpoint/move.pt'))
+    self.move_model.load_state_dict(torch.load('checkpoint/move-aa.pt'))
     self.move_model.eval()
     self.imu_window_length = imu_window_length
     self.num_classes = num_classes
@@ -119,21 +119,24 @@ class GestureDetector(TorchNode):
   def test(self):
     for i in range(40):
       self.move_imu_window.push((0, 0, 0, 0, 0, 0))
-    for i in range(1, 40):
-      d = np.array([i, 2 * i, 3 * i, 4 * i, 5 * i, 6 * i])
-      self.imu_window.push(d)
-      orientation = self.madgwick_helper.update(d)
-      print('ori', orientation)
-      without_gravity = self.madgwick_helper.data_without_gravity
-      print('without', without_gravity)
-      self.move_imu_window.push(np.array(without_gravity))
-      input_tensor = torch.tensor(self.move_imu_window.to_numpy_float()
-                    .reshape(1, 13, 6)).to(self.device)
-      output_tensor, self.hx = self.move_model(input_tensor, self.hx)
-      output_tensor = output_tensor.detach().cpu().numpy()
-      print(output_tensor)
-
-
+    with open('log.txt' ,'r') as f:
+      for line in f.readlines():
+        if line.startswith('imu'):
+          d = np.array(list(map(float, line.strip()[5:-1].split(','))))
+          self.imu_window.push(d)
+          orientation = self.madgwick_helper.update(d)
+          without_gravity = self.madgwick_helper.data_without_gravity
+          self.move_imu_window.push(np.array(without_gravity))
+          input_tensor = torch.tensor(self.move_imu_window.to_numpy_float()
+                        .reshape(1, 13, 6)).to(self.device)
+          output_tensor, self.hx = self.move_model(input_tensor, self.hx)
+          output_tensor = output_tensor.detach().cpu().numpy()
+        if line.startswith('move'):
+          m = np.array(list(map(float, line.strip()[10:-1].split(','))))
+          dis = abs(m[0] - without_gravity[0]) + abs(m[1] - without_gravity[1]) + abs(m[2] - without_gravity[2])
+          if dis > 0.0001:
+            print(dis)
+    print()
 
   def handle_input_edge_battery(self, battery: int, timestamp: float) -> None:
     ...
@@ -157,28 +160,19 @@ class GestureDetector(TorchNode):
       return 0
 
   def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
-
-    print(data)
-
+    # print(data)
     self.imu_window.push(data.to_numpy())
-
     self.imu_x_window.push(data.to_numpy()[0])
-
     orientation = self.madgwick_helper.update(self.imu_window.last())
     without_gravity = self.madgwick_helper.data_without_gravity
-
-    print(without_gravity[0], without_gravity[1], without_gravity[2])
-
+    # print(without_gravity[0], without_gravity[1], without_gravity[2])
     self.move_imu_window.push(np.array(without_gravity))
-
-
     if self.counter.count(enable_print=True, print_fps=True) and self.imu_window.full():
       input_tensor = torch.tensor(self.imu_window.to_numpy_float().T
                                   .reshape(1, 6, self.imu_window_length)).to(self.device)
       output_tensor = F.softmax(self.model(input_tensor).detach().cpu(), dim=1)
       gesture_id = torch.max(output_tensor, dim=1)[1].item()
       confidence = output_tensor[0][gesture_id].item()
-
       # print(gesture_id, self.labels[gesture_id])
       if confidence > self.confidence_threshold:
         if gesture_id != 3:

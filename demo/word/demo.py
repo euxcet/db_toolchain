@@ -18,10 +18,11 @@ def run():
   config = load_config(args.config)
   fill_value_by_name(config, 'Ring', 'address', args.ring)
   fill_value_by_name(config, 'RingV2', 'address', args.ring)
-  Graph(config).run()
+  Graph(config)
+  # Graph(config).run()
 
-  while True:
-    time.sleep(1)
+  # while True:
+  #   time.sleep(1)
 
 if __name__ == '__main__':
   run()

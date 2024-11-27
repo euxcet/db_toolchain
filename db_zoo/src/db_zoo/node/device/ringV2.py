@@ -322,7 +322,9 @@ class RingV2(Device):
       self.output(self.OUTPUT_EDGE_TOUCH_RAW, (data[4], data[5:]))
 
     elif data[2] == 0x61 and data[3] == 0x2:
-      print('Touch:', ['TAP', 'LONG_PRESS', 'DOUBLE_TAP', 'DOWN', 'UP'][data[4]])
+      event = ['TAP', 'LONG_PRESS', 'DOUBLE_TAP', 'DOWN', 'UP'][data[4]]
+      print('Touch:', event)
+      self.output(self.OUTPUT_EDGE_TOUCH, event)
 
     elif data[2] == 0x71 and data[3] == 0x0:
       length, seq = struct.unpack('<hi', data[4:10])
