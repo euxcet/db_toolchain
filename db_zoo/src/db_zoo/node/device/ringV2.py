@@ -151,6 +151,8 @@ class RingV2(Device):
   OUTPUT_EDGE_BATTERY   = 'battery'
   OUTPUT_EDGE_PPG_G     = 'ppg_g'
   OUTPUT_EDGE_PPG_R     = 'ppg_r'
+  OUTPUT_EDGE_PPG_HR    = 'ppg_hr'
+  OUTPUT_EDGE_PPG_SPO2  = 'ppg_spo2'
 
   def __init__(
       self,
@@ -298,17 +300,10 @@ class RingV2(Device):
     elif data[2] == 0x12 and data[3] == 0x1:
       self.output(self.OUTPUT_EDGE_BATTERY, (1, data[4]))
     elif data[2] == 0x40 and data[3] == 0x06:
-      last_x = 0
-      count = 0
-      for index in range(5, len(data), 12):
+      for index in range(4, len(data), 12):
         acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z = struct.unpack('<hhhhhh', data[index:index+12])
         acc_x, acc_y, acc_z = acc_x / 1000 * 9.8, acc_y / 1000 * 9.8, acc_z / 1000 * 9.8
         gyr_x, gyr_y, gyr_z = gyr_x / 180 * math.pi,  gyr_y / 180 * math.pi, gyr_z / 180 * math.pi
-        count += 1
-        if count == 5:
-          # print(gyr_x)
-          gyr_x = last_x
-        last_x = gyr_x
         self.output(self.OUTPUT_EDGE_IMU, IMUData(
             -acc_y, acc_z, -acc_x,
             -gyr_y - self.drift[0], gyr_z - self.drift[1], -gyr_x - self.drift[2],
@@ -323,30 +318,34 @@ class RingV2(Device):
 
     elif data[2] == 0x61 and data[3] == 0x2:
       event = ['TAP', 'LONG_PRESS', 'DOUBLE_TAP', 'DOWN', 'UP'][data[4]]
-      print('Touch:', event)
+      # print('Touch:', event)
       self.output(self.OUTPUT_EDGE_TOUCH, event)
 
     elif data[2] == 0x71 and data[3] == 0x0:
       length, seq = struct.unpack('<hi', data[4:10])
       self.output(self.OUTPUT_EDGE_MIC, (length, seq, data[10:]))
     elif data[2] == 0x31 and data[3] == 0x00:
-      ...
+      self.output(self.OUTPUT_EDGE_PPG_HR, (data[4], data[5]))
       # print(data)
     elif data[2] == 0x31 and data[3] == 0x01:
-      seq = data[4]
-      num = data[5]
-      for i in range(num):
-        offset = 6 + 10 * i
-        self.output(self.OUTPUT_EDGE_PPG_G, data[offset : offset + 3])
+      for index in range(4, len(data), 4):
+        self.output(self.OUTPUT_EDGE_PPG_G, struct.unpack('<i', data[index: index+4])[0])
+      # seq = data[4]
+      # num = data[5]
+      # for i in range(num):
+      #   offset = 6 + 10 * i
+      #   self.output(self.OUTPUT_EDGE_PPG_G, data[offset : offset + 3])
     elif data[2] == 0x32 and data[3] == 0x00:
-      ...
+      self.output(self.OUTPUT_EDGE_PPG_SPO2, (data[4], data[5]))
       # print(data)
     elif data[2] == 0x32 and data[3] == 0x01:
-      seq = data[4]
-      num = data[5]
-      for i in range(num):
-        offset = 6 + 14 * i
-        self.output(self.OUTPUT_EDGE_PPG_R, data[offset : offset + 7])
+      for index in range(4, len(data), 8):
+        self.output(self.OUTPUT_EDGE_PPG_G, struct.unpack('<ii', data[index: index+8]))
+      # seq = data[4]
+      # num = data[5]
+      # for i in range(num):
+      #   offset = 6 + 14 * i
+      #   self.output(self.OUTPUT_EDGE_PPG_R, data[offset : offset + 7])
     elif data[2] == 0x84:
       if (len(data) == 7):
         print('Sensitivity', data[4], data[5], data[6])

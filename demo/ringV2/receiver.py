@@ -8,8 +8,10 @@ from db_graph.utils.counter import Counter
 from db_graph.framework.graph import Graph
 from db_graph.framework.node import Node
 from db_graph.data.imu_data import IMUData
+from db_graph.utils.window import Window
 from db_zoo.node.device.ringV2 import RingV2Action
 import struct
+import threading
 
 class Receiver(Node):
 
@@ -20,6 +22,8 @@ class Receiver(Node):
   INPUT_EDGE_BATTERY = 'battery'
   INPUT_EDGE_PPG_G = 'ppg_g'
   INPUT_EDGE_PPG_R = 'ppg_r'
+  INPUT_EDGE_PPG_HR = 'ppg_hr'
+  INPUT_EDGE_PPG_SPO2 = 'ppg_spo2'
   OUTPUT_EDGE_ACTION = 'action'
 
   def __init__(
@@ -48,6 +52,8 @@ class Receiver(Node):
     self.ppg_file = None
     self.ppg_start = 0
     self.ppg_counter = 1
+    self.zero_shift_window = Window(200)
+    self.lock = threading.Lock()
 
   @override
   def start(self):
@@ -118,25 +124,29 @@ class Receiver(Node):
         sequence_dir = 2,
       ))
     elif key == 'p':
-      self.ppg_file = open('ppg_r.bin', 'wb')
+      self.ppg_file = open('ppg_r.txt', 'w')
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.open_ppg_red(time=120, freq=100, ))
       # self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.OPEN_PPG_R)
     elif key == '[':
+      self.lock.acquire()
       self.ppg_start = 0
       if self.ppg_file is not None:
         self.ppg_file.close()
         self.ppg_file = None
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.CLOSE_PPG_R)
+      self.lock.release()
     elif key == '0':
-      self.ppg_file = open('ppg_g.bin', 'wb')
+      self.ppg_file = open('ppg_g.txt', 'w')
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.open_ppg_green(time=120, freq=100,))
       # self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.OPEN_PPG_G)
     elif key == '-':
+      self.lock.acquire()
       self.ppg_start = 0
       if self.ppg_file is not None:
         self.ppg_file.close()
         self.ppg_file = None
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.CLOSE_PPG_G)
+      self.lock.release()
     elif key == '5':
       self.output(self.OUTPUT_EDGE_ACTION, RingV2Action.GET_TOUCH_SEN)
     elif key == '6':
@@ -156,16 +166,30 @@ class Receiver(Node):
       if self.ppg_counter % 100 == 0:
         self.log_info(f'PPG freq: {self.ppg_counter / (time.time() - self.ppg_start)}')
 
+  def handle_input_edge_ppg_hr(self, data, timestamp: float) -> None:
+    print('hr', data)
+
+  def handle_input_edge_ppg_spo2(self, data, timestamp: float) -> None:
+    print('spo2', data)
+
   def handle_input_edge_ppg_g(self, data, timestamp: float) -> None:
-    self.count_ppg()
+    # print('data', data)
+    self.lock.acquire()
     if self.ppg_file is not None:
-      self.ppg_file.write(data)
+      self.count_ppg()
+      self.ppg_file.write(f'{data}\n')
+      self.ppg_file.flush()
+    self.lock.release()
 
   def handle_input_edge_ppg_r(self, data, timestamp: float) -> None:
-    print(data[0], data[1], data[2])
-    self.count_ppg()
+    # print('data', data)
+    # print(data[0], data[1], data[2])
+    self.lock.acquire()
     if self.ppg_file is not None:
-      self.ppg_file.write(data)
+      self.count_ppg()
+      self.ppg_file.write(f'{data[0]} {data[1]}\n')
+      self.ppg_file.flush()
+    self.lock.release()
 
   def handle_input_edge_battery(self, data: float, timestamp: float) -> None:
     if data[0] == 0:
@@ -178,6 +202,21 @@ class Receiver(Node):
         self.log_info(f'Battery Cost (%/h) = {round((battery - self.first_battery) / (time.time() - self.first_battery_time) * 3600, 2)}')
     elif data[0] == 1:
       self.log_info(f'Battery Status = {data[1]}')
+
+  def cal_zero_shift(self, data: IMUData) -> None:
+    self.zero_shift_window.push(data)
+    if self.zero_shift_window.full():
+      stable = True
+      for index, data in enumerate(self.zero_shift_window.window):
+        if data.gyr_norm > 1:
+          stable = False
+        if index > 0:
+          dlt = data.sub(self.zero_shift_window.window[0])
+          if dlt.acc_norm > 0.3 or dlt.gyr_norm > 0.3:
+            stable = False
+      if stable:
+        self.drift = self.zero_shift_window.last()
+        print(self.drift)
 
   def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
     self.imu_counter.count(enable_print=True, print_dict={'Sensor': 'IMU'})
@@ -193,7 +232,8 @@ class Receiver(Node):
         self.test_latency = 0
 
   def handle_input_edge_touch(self, data: tuple, timestamp: float) -> None:
-    print('Touch Event', data)
+    ...
+    # print('Touch Event', data)
 
   def handle_input_edge_touch_raw(self, data: tuple, timestamp: float) -> None:
     pass

@@ -17,6 +17,6 @@ nodes:
     imu_window_length: 20
     gesture_window_length: 3
     checkpoint_file: checkpoint/touch_event.pth
-    execute_interval: 2
+    execute_interval: 1
     confidence_threshold: 0.8
     labels: [ ALWAYS_CONTACT, ALWAYS_NO_CONTACT, UP, DOWN ]

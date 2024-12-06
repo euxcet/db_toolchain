@@ -57,3 +57,7 @@ class IMUData():
 
   def to_numpy(self) -> np.ndarray:
     return np.array([self.acc_x, self.acc_y, self.acc_z, self.gyr_x, self.gyr_y, self.gyr_z])
+
+  def sub(self, d: IMUData) -> IMUData:
+    return IMUData(self.acc_x - d.acc_x, self.acc_y - d.acc_y, self.acc_z - d.acc_z, \
+                   self.gyr_x - d.gyr_x, self.gyr_y - d.gyr_y, self.gyr_z - d.gyr_z, 0.0)
