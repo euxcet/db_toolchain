@@ -31,8 +31,12 @@ class NotifyProtocol():
   OPEN_6AXIS_IMU       = bytearray([0x00, 0x00, 0x40, 0x06])
   CLOSE_6AXIS_IMU      = bytearray([0x00, 0x00, 0x40, 0x00])
   GET_TOUCH            = bytearray([0x00, 0x00, 0x61, 0x00])
-  OPEN_MIC             = bytearray([0x00, 0x00, 0x71, 0x00, 0x01])
-  CLOSE_MIC            = bytearray([0x00, 0x00, 0x71, 0x00, 0x00])
+
+  OPEN_MIC             = bytearray([0x00, 0x00, 0x71, 0x01])
+  CLOSE_MIC            = bytearray([0x00, 0x00, 0x71, 0x00])
+  # OPEN_MIC             = bytearray([0x00, 0x00, 0x71, 0x00, 0x01])
+  # CLOSE_MIC            = bytearray([0x00, 0x00, 0x71, 0x00, 0x00])
+
   GET_NFC              = bytearray([0x00, 0x00, 0x82, 0x00])
   # 100hz
   OPEN_PPG_G           = bytearray([0x00, 0x00, 0x31, 0x00, 0x1e, 0x02, 0x02, 0x01, 0x01])
@@ -243,7 +247,6 @@ class RingV2(Device):
     self.output(self.OUTPUT_EDGE_LIFECYCLE, DeviceLifeCircleEvent.on_error)
 
   async def write(self, data: bytearray) -> None:
-    print('write', data)
     await self.client.write_gatt_char(NotifyProtocol.WRITE_CHARACTERISTIC, data)
 
   async def connect_async(self) -> None:
@@ -300,7 +303,7 @@ class RingV2(Device):
     elif data[2] == 0x12 and data[3] == 0x1:
       self.output(self.OUTPUT_EDGE_BATTERY, (1, data[4]))
     elif data[2] == 0x40 and data[3] == 0x06:
-      for index in range(4, len(data), 12):
+      for index in range(4 + len(data) % 2, len(data), 12):
         acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z = struct.unpack('<hhhhhh', data[index:index+12])
         acc_x, acc_y, acc_z = acc_x / 1000 * 9.8, acc_y / 1000 * 9.8, acc_z / 1000 * 9.8
         gyr_x, gyr_y, gyr_z = gyr_x / 180 * math.pi,  gyr_y / 180 * math.pi, gyr_z / 180 * math.pi
@@ -318,12 +321,13 @@ class RingV2(Device):
 
     elif data[2] == 0x61 and data[3] == 0x2:
       event = ['TAP', 'LONG_PRESS', 'DOUBLE_TAP', 'DOWN', 'UP'][data[4]]
-      # print('Touch:', event)
+      print('Touch:', event)
       self.output(self.OUTPUT_EDGE_TOUCH, event)
 
     elif data[2] == 0x71 and data[3] == 0x0:
-      length, seq = struct.unpack('<hi', data[4:10])
-      self.output(self.OUTPUT_EDGE_MIC, (length, seq, data[10:]))
+      # length, seq = struct.unpack('<hi', data[4:10])
+      # self.output(self.OUTPUT_EDGE_MIC, (length, seq, data[10:]))
+      self.output(self.OUTPUT_EDGE_MIC, data[4:])
     elif data[2] == 0x31 and data[3] == 0x00:
       self.output(self.OUTPUT_EDGE_PPG_HR, (data[4], data[5]))
       # print(data)
@@ -426,8 +430,8 @@ class RingV2(Device):
           self.reconnect()
         elif action == RingV2Action.GET_BATTERY_LEVEL:
           await self.write(NotifyProtocol.GET_BATTERY_LEVEL)
-        # elif action == RingV2Action.OPEN_MIC:
-        #   await self.write(NotifyProtocol.OPEN_MIC)
+        elif action == RingV2Action.OPEN_MIC:
+          await self.write(NotifyProtocol.OPEN_MIC)
         elif action == RingV2Action.CLOSE_MIC:
           await self.write(NotifyProtocol.CLOSE_MIC)
         elif action == RingV2Action.OPEN_IMU:

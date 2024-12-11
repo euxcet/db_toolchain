@@ -54,6 +54,8 @@ class Receiver(Node):
     self.ppg_counter = 1
     self.zero_shift_window = Window(200)
     self.lock = threading.Lock()
+    self.imu_file = None
+    # self.imu_file = open("imu" + str(time.time()) + ".bin", 'wb')
 
   @override
   def start(self):
@@ -219,17 +221,30 @@ class Receiver(Node):
         print(self.drift)
 
   def handle_input_edge_imu(self, data: IMUData, timestamp: float) -> None:
+    if self.imu_file != None:
+      self.imu_file.write(struct.pack('ffffff', data.acc_x, data.acc_y, data.acc_z, data.gyr_x, data.gyr_y, data.gyr_z))
+      self.imu_file.flush()
+    # print(data)
     self.imu_counter.count(enable_print=True, print_dict={'Sensor': 'IMU'})
 
-  def handle_input_edge_mic(self, data: tuple, timestamp: float) -> None:
+  def handle_input_edge_mic(self, data, timestamp: float) -> None:
     self.mic_counter.count(enable_print=True, print_dict={'Sensor': 'MIC'})
-    length, seq, bytes = data
-    self.audio += bytes
-    for i in range(0, len(bytes), 2):
-      v = struct.unpack('<h', bytes[i: i + 2])[0]
+    self.audio += data
+    for i in range(0, len(data), 2):
+      v = struct.unpack('<h', data[i: i + 2])[0]
       if abs(v) > 4000 and self.test_latency > 0:
         print('Latency:', str(round(time.time() - self.test_latency, 2)) + 's')
         self.test_latency = 0
+
+  # def handle_input_edge_mic(self, data: tuple, timestamp: float) -> None:
+  #   self.mic_counter.count(enable_print=True, print_dict={'Sensor': 'MIC'})
+  #   length, seq, bytes = data
+  #   self.audio += bytes
+  #   for i in range(0, len(bytes), 2):
+  #     v = struct.unpack('<h', bytes[i: i + 2])[0]
+  #     if abs(v) > 4000 and self.test_latency > 0:
+  #       print('Latency:', str(round(time.time() - self.test_latency, 2)) + 's')
+  #       self.test_latency = 0
 
   def handle_input_edge_touch(self, data: tuple, timestamp: float) -> None:
     ...
